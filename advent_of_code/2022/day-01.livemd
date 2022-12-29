@@ -1,0 +1,70 @@
+# Day 1
+
+## Day 1: Calorie Counting
+
+[Day 1: Calorie Counting](https://adventofcode.com/2022/day/1)
+
+## Input
+
+```elixir
+input = """
+1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000
+"""
+```
+
+## Part 1
+
+```elixir
+f = fn
+  "" -> ""
+  s -> String.to_integer(s)
+end
+
+sum = fn
+  [""] -> 0
+  list -> Enum.sum(list)
+end
+
+input
+|> String.split("\n")
+|> Enum.map(f)
+|> Enum.chunk_by(&(&1 == ""))
+|> Enum.map(sum)
+|> Enum.max()
+```
+
+## Part 2
+
+```elixir
+f = fn
+  "" -> ""
+  s -> String.to_integer(s)
+end
+
+sum = fn
+  [""] -> 0
+  list -> Enum.sum(list)
+end
+
+input
+|> String.split("\n")
+|> Enum.map(f)
+|> Enum.chunk_by(&(&1 == ""))
+|> Enum.map(sum)
+|> Enum.sort(:desc)
+|> Enum.take(3)
+|> Enum.sum()
+```

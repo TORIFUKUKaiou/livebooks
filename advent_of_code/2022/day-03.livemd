@@ -1,0 +1,68 @@
+# Day 3
+
+## Day 3: Rucksack Reorganization
+
+[Day 3: Rucksack Reorganization](https://adventofcode.com/2022/day/3)
+
+## Input
+
+```elixir
+input = """
+vJrwpWtwJgWrhcsFMMfFFhFp
+jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
+PmmdzqPrVvPwwTWBwg
+wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
+ttgJtRGJQctTZtZT
+CrZsJsPPZsGzwwsLwLmpwMDw
+"""
+```
+
+## Part 1
+
+```elixir
+f = fn line, range ->
+  String.slice(line, range)
+  |> String.to_charlist()
+  |> MapSet.new()
+end
+
+scores = ?a..?z |> Enum.zip(1..26) |> Kernel.++(Enum.zip(?A..?Z, 27..52)) |> Map.new()
+
+input
+|> String.split("\n", trim: true)
+|> Enum.map(fn line ->
+  len = String.length(line)
+
+  f.(line, 0..(div(len, 2) - 1))
+  |> MapSet.intersection(f.(line, div(len, 2)..-1))
+  |> Enum.at(0)
+  |> then(&Map.fetch!(scores, &1))
+end)
+|> Enum.sum()
+```
+
+## Part 2
+
+```elixir
+f = fn line ->
+  line
+  |> String.to_charlist()
+  |> MapSet.new()
+end
+
+scores = ?a..?z |> Enum.zip(1..26) |> Kernel.++(Enum.zip(?A..?Z, 27..52)) |> Map.new()
+
+input
+|> String.split("\n", trim: true)
+|> Enum.chunk_every(3)
+|> Enum.map(fn lines ->
+  lines
+  |> Enum.map(f)
+  |> Enum.reduce(fn line_map_set, acc ->
+    MapSet.intersection(line_map_set, acc)
+  end)
+  |> Enum.at(0)
+  |> then(&Map.fetch!(scores, &1))
+end)
+|> Enum.sum()
+```
