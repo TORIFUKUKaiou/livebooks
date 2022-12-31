@@ -1,0 +1,135 @@
+# Day 5
+
+## Day 5: Supply Stacks
+
+[Day 5: Supply Stacks](https://adventofcode.com/2022/day/5)
+
+## Input
+
+```elixir
+input = """
+    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3 
+
+move 1 from 2 to 1
+move 3 from 1 to 3
+move 2 from 2 to 1
+move 1 from 1 to 2
+"""
+```
+
+## Part 1
+
+```elixir
+defmodule Stack do
+  def push("", stack) do
+    stack
+  end
+
+  def push(e, stack) do
+    [e | stack]
+  end
+
+  def pop([]), do: {"", []}
+
+  def pop([head | tail]), do: {head, tail}
+end
+```
+
+```elixir
+[crates, [""], procedures, [""]] =
+  input
+  |> String.split("\n")
+  |> Enum.chunk_by(&(&1 == ""))
+
+crates =
+  crates
+  |> Enum.take(Enum.count(crates) - 1)
+  |> Enum.map(fn line ->
+    String.split(line, [" "])
+    |> Enum.reduce({[], 0}, fn
+      "", {acc_list, acc_cnt} ->
+        acc_cnt = acc_cnt + 1
+
+        if acc_cnt >= 4 do
+          {acc_list ++ [""], 0}
+        else
+          {acc_list, acc_cnt}
+        end
+
+      <<"[", s, "]">>, {acc_list, _acc_cnt} ->
+        {acc_list ++ [s], 0}
+    end)
+    |> elem(0)
+  end)
+  |> IO.inspect()
+
+[top | _] = crates
+rows = Enum.count(top) |> IO.inspect()
+
+crates_map =
+  crates
+  |> Enum.map(&Enum.with_index/1)
+  |> Enum.with_index()
+  |> Enum.reduce(%{}, fn {list, i}, acc ->
+    list
+    |> Enum.reduce(acc, fn {crate, j}, acc2 ->
+      Map.merge(acc2, %{{i, j} => crate})
+    end)
+  end)
+  |> IO.inspect()
+
+stacks_of_crates =
+  for j <- 0..(rows - 1), i <- (Enum.count(crates) - 1)..0, reduce: %{} do
+    acc ->
+      Map.update(acc, j, Stack.push(crates_map[{i, j}], []), &Stack.push(crates_map[{i, j}], &1))
+  end
+```
+
+```elixir
+procedures
+|> Enum.map(fn procedure ->
+  ["move", cnt, "from", from, "to", to] = String.split(procedure, " ")
+  {String.to_integer(cnt), String.to_integer(from) - 1, String.to_integer(to) - 1}
+end)
+|> Enum.reduce(stacks_of_crates, fn {cnt, from, to}, acc ->
+  1..cnt
+  |> Enum.reduce(acc, fn _, acc2 ->
+    IO.inspect(acc2)
+    {e, from_stack} = Stack.pop(acc2[from])
+    to_stack = Stack.push(e, acc2[to])
+    acc2 |> Map.merge(%{from => from_stack}) |> Map.merge(%{to => to_stack}) |> IO.inspect()
+  end)
+end)
+|> Enum.sort_by(fn {column, _stack} -> column end)
+|> Enum.map(fn {_, [head | _]} -> head end)
+```
+
+## Part 2
+
+```elixir
+defmodule CrateMover9001 do
+  def push(list, stack) do
+    list ++ stack
+  end
+
+  def pop(stack, cnt), do: {Enum.take(stack, cnt), Enum.slice(stack, cnt..-1)}
+end
+```
+
+```elixir
+procedures
+|> Enum.map(fn procedure ->
+  ["move", cnt, "from", from, "to", to] = String.split(procedure, " ")
+  {String.to_integer(cnt), String.to_integer(from) - 1, String.to_integer(to) - 1}
+end)
+|> Enum.reduce(stacks_of_crates, fn {cnt, from, to}, acc ->
+  {list, from_stack} = CrateMover9001.pop(acc[from], cnt)
+  to_stack = CrateMover9001.push(list, acc[to])
+  acc |> Map.merge(%{from => from_stack}) |> Map.merge(%{to => to_stack}) |> IO.inspect()
+end)
+|> Enum.sort_by(fn {column, _stack} -> column end)
+|> Enum.map(fn {_, [head | _]} -> head end)
+```
