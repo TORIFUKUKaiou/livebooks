@@ -1,0 +1,51 @@
+# Day 6
+
+## Day 6: Tuning Trouble
+
+[Day 6: Tuning Trouble](https://adventofcode.com/2022/day/6)
+
+## Input
+
+```elixir
+input = 'mjqjpqmgbljsphdztnvjfqwrcgsmlb'
+```
+
+## Part 1
+
+```elixir
+defmodule Awesome do
+  def solve([{head, _} | tail]) do
+    list = Enum.take(tail, 3)
+
+    list
+    |> Enum.map(fn {a, _} -> a end)
+    |> MapSet.new()
+    |> MapSet.put(head)
+    |> MapSet.size()
+    |> Kernel.>=(4)
+    |> if(do: list |> Enum.at(-1) |> elem(1), else: solve(tail))
+  end
+end
+
+input |> Enum.with_index(1) |> Awesome.solve()
+```
+
+## Part 2
+
+```elixir
+defmodule Awesome2 do
+  def solve([{head, _} | tail]) do
+    list = Enum.take(tail, 13)
+
+    list
+    |> Enum.map(fn {a, _} -> a end)
+    |> MapSet.new()
+    |> MapSet.put(head)
+    |> MapSet.size()
+    |> Kernel.>=(14)
+    |> if(do: list |> Enum.at(-1) |> elem(1), else: solve(tail))
+  end
+end
+
+input |> Enum.with_index(1) |> Awesome2.solve()
+```
