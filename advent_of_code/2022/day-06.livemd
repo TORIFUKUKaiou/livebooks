@@ -19,9 +19,9 @@ defmodule Awesome do
 
     list
     |> Enum.map(fn {a, _} -> a end)
-    |> MapSet.new()
-    |> MapSet.put(head)
-    |> MapSet.size()
+    |> Kernel.++([head])
+    |> Enum.uniq()
+    |> Enum.count()
     |> Kernel.>=(4)
     |> if(do: list |> Enum.at(-1) |> elem(1), else: solve(tail))
   end
@@ -39,9 +39,9 @@ defmodule Awesome2 do
 
     list
     |> Enum.map(fn {a, _} -> a end)
-    |> MapSet.new()
-    |> MapSet.put(head)
-    |> MapSet.size()
+    |> Kernel.++([head])
+    |> Enum.uniq()
+    |> Enum.count()
     |> Kernel.>=(14)
     |> if(do: list |> Enum.at(-1) |> elem(1), else: solve(tail))
   end
