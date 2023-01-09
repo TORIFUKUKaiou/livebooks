@@ -1,0 +1,198 @@
+# Day7
+
+## Day 7: No Space Left On Device
+
+[Day 7: No Space Left On Device](https://adventofcode.com/2022/day/7)
+
+## Part 1
+
+```elixir
+input = """
+$ cd /
+$ ls
+dir a
+14848514 b.txt
+8504156 c.dat
+dir d
+$ cd a
+$ ls
+dir e
+29116 f
+2557 g
+62596 h.lst
+$ cd e
+$ ls
+584 i
+$ cd ..
+$ cd ..
+$ cd d
+$ ls
+4060174 j
+8033020 d.log
+5626152 d.ext
+7214296 k
+"""
+```
+
+```elixir
+f = fn
+  "$ cd ..", map, current, paths ->
+    {map, Enum.slice(current, 0..-2), paths}
+
+  "$ cd " <> dir, map, current, paths ->
+    new_current = current ++ [dir]
+    new_paths = MapSet.put(paths, new_current)
+
+    case get_in(map, new_current) do
+      nil ->
+        new_map = put_in(map, new_current, %{files: [], total_size: 0})
+        {new_map, new_current, new_paths}
+
+      %{files: _files} ->
+        {map, current, new_paths}
+    end
+
+  "$ ls", map, current, paths ->
+    {map, current, paths}
+
+  "dir " <> _dir, map, current, paths ->
+    {map, current, paths}
+
+  line, map, current, paths ->
+    file_name = line |> String.split(" ") |> Enum.at(-1)
+    file_size = line |> String.split(" ") |> Enum.at(0) |> String.to_integer()
+    files_path = current ++ [:files]
+    total_size_path = current ++ [:total_size]
+
+    {_, new_map} =
+      get_and_update_in(map, files_path, &{&1, &1 ++ [{file_name, file_size}]})
+      |> elem(1)
+      |> get_and_update_in(total_size_path, &{&1, &1 + file_size})
+
+    {new_map, current, paths}
+end
+
+{map, _, paths} =
+  input
+  |> String.split("\n", trim: true)
+  |> Enum.reduce({%{}, [], MapSet.new()}, fn line, {acc_map, acc_current, acc_paths} ->
+    f.(line, acc_map, acc_current, acc_paths)
+  end)
+
+IO.inspect(map)
+IO.inspect(paths)
+
+total_sizes =
+  paths
+  |> Enum.reduce(%{}, fn path, acc ->
+    key = Enum.join(path, "/")
+    total_size = get_in(map, path ++ [:total_size])
+    Map.update(acc, key, total_size, fn _ -> :error end)
+  end)
+
+IO.inspect(total_sizes)
+
+sum_of_total_sizes =
+  paths
+  |> Enum.reduce(%{}, fn path, acc ->
+    key = Enum.join(path, "/")
+
+    sum_of_total_size =
+      total_sizes
+      |> Enum.filter(fn {path, _total_size} -> String.starts_with?(path, key) end)
+      |> Enum.map(fn {_path, total_size} -> total_size end)
+      |> Enum.sum()
+
+    Map.update(acc, key, sum_of_total_size, fn _ -> :error end)
+  end)
+
+sum_of_total_sizes
+|> Enum.filter(fn {_path, sum_of_total_size} -> sum_of_total_size <= 100_000 end)
+|> IO.inspect()
+|> Enum.map(fn {_path, sum_of_total_size} -> sum_of_total_size end)
+|> Enum.sum()
+```
+
+## Part 2
+
+```elixir
+f = fn
+  "$ cd ..", map, current, paths ->
+    {map, Enum.slice(current, 0..-2), paths}
+
+  "$ cd " <> dir, map, current, paths ->
+    new_current = current ++ [dir]
+    new_paths = MapSet.put(paths, new_current)
+
+    case get_in(map, new_current) do
+      nil ->
+        new_map = put_in(map, new_current, %{files: [], total_size: 0})
+        {new_map, new_current, new_paths}
+
+      %{files: _files} ->
+        {map, current, new_paths}
+    end
+
+  "$ ls", map, current, paths ->
+    {map, current, paths}
+
+  "dir " <> _dir, map, current, paths ->
+    {map, current, paths}
+
+  line, map, current, paths ->
+    file_name = line |> String.split(" ") |> Enum.at(-1)
+    file_size = line |> String.split(" ") |> Enum.at(0) |> String.to_integer()
+    files_path = current ++ [:files]
+    total_size_path = current ++ [:total_size]
+
+    {_, new_map} =
+      get_and_update_in(map, files_path, &{&1, &1 ++ [{file_name, file_size}]})
+      |> elem(1)
+      |> get_and_update_in(total_size_path, &{&1, &1 + file_size})
+
+    {new_map, current, paths}
+end
+
+{map, _, paths} =
+  input
+  |> String.split("\n", trim: true)
+  |> Enum.reduce({%{}, [], MapSet.new()}, fn line, {acc_map, acc_current, acc_paths} ->
+    f.(line, acc_map, acc_current, acc_paths)
+  end)
+
+IO.inspect(map)
+IO.inspect(paths)
+
+total_sizes =
+  paths
+  |> Enum.reduce(%{}, fn path, acc ->
+    key = Enum.join(path, "/")
+    total_size = get_in(map, path ++ [:total_size])
+    Map.update(acc, key, total_size, fn _ -> :error end)
+  end)
+
+IO.inspect(total_sizes)
+
+sum_of_total_sizes =
+  paths
+  |> Enum.reduce(%{}, fn path, acc ->
+    key = Enum.join(path, "/")
+
+    sum_of_total_size =
+      total_sizes
+      |> Enum.filter(fn {path, _total_size} -> String.starts_with?(path, key) end)
+      |> Enum.map(fn {_path, total_size} -> total_size end)
+      |> Enum.sum()
+
+    Map.update(acc, key, sum_of_total_size, fn _ -> :error end)
+  end)
+
+unused_space = 70_000_000 - sum_of_total_sizes["/"]
+
+sum_of_total_sizes
+|> Enum.filter(fn {_path, sum_of_total_size} -> unused_space + sum_of_total_size >= 30_000_000 end)
+|> IO.inspect()
+|> Enum.min_by(fn {_path, sum_of_total_size} -> sum_of_total_size end)
+|> IO.inspect()
+|> elem(1)
+```
