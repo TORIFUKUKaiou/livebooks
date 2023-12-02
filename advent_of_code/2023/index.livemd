@@ -5,3 +5,4 @@
 Requires Livebook v0.11+.
 
 * [Day 1](day-01.livemd)
+* [Day 2](day-02.livemd)
