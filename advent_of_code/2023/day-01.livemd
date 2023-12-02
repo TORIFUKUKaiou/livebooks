@@ -1,0 +1,78 @@
+# Day 1
+
+## Day 1: Trebuchet?!
+
+[Day 1: Trebuchet?!](https://adventofcode.com/2023/day/1)
+
+## Input
+
+```elixir
+input = """
+1abc2
+pqr3stu8vwx
+a1b2c3d4e5f
+treb7uchet
+"""
+```
+
+## Part 1
+
+```elixir
+f = fn s -> s |> String.to_charlist() |> Enum.filter(fn c -> c in ?0..?9 end) end
+f2 = fn list -> "#{Enum.at(list, 0) - ?0}#{Enum.at(list, -1) - ?0}" |> String.to_integer() end
+input |> String.split("\n", trim: true) |> Enum.map(&(f.(&1) |> f2.())) |> Enum.sum()
+```
+
+## Part 2
+
+```elixir
+input = """
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
+"""
+```
+
+```elixir
+f = fn s ->
+  s
+  |> String.replace(
+    ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"],
+    fn
+      "one" -> "1e"
+      "two" -> "2o"
+      "three" -> "3e"
+      "four" -> "4r"
+      "five" -> "5e"
+      "six" -> "6x"
+      "seven" -> "7n"
+      "eight" -> "8t"
+      "nine" -> "9e"
+    end
+  )
+  |> String.replace(
+    ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"],
+    fn
+      "one" -> "1e"
+      "two" -> "2o"
+      "three" -> "3e"
+      "four" -> "4r"
+      "five" -> "5e"
+      "six" -> "6x"
+      "seven" -> "7n"
+      "eight" -> "8t"
+      "nine" -> "9e"
+    end
+  )
+  |> String.to_charlist()
+  |> Enum.filter(fn c -> c in ?0..?9 end)
+end
+
+f2 = fn list -> "#{Enum.at(list, 0) - ?0}#{Enum.at(list, -1) - ?0}" |> String.to_integer() end
+
+input |> String.split("\n", trim: true) |> Enum.map(&(f.(&1) |> f2.())) |> Enum.sum()
+```
