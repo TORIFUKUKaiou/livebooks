@@ -72,13 +72,13 @@ defmodule Awesome do
     |> Enum.min()
   end
 
-  defp get(seed, map) do
-    case Enum.find(map, fn {source_range, _destination_range} -> seed in source_range end) do
+  defp get(source, map) do
+    case Enum.find(map, fn {source_range, _destination_range} -> source in source_range end) do
       nil ->
-        seed
+        source
 
       {source_range, destination_range} ->
-        index = seed - Enum.at(source_range, 0)
+        index = source - Enum.at(source_range, 0)
         Enum.at(destination_range, index)
     end
   end
@@ -339,29 +339,29 @@ Awesome.run(input2)
 
 ```elixir
 defmodule Awesome2 do
-  def run(input) do
+  def run(input, init \\ 0) do
     seeds = seeds(input) |> IO.inspect()
-    seed_to_soil_map = map(input, "seed-to-soil map:\n")
-    soil_to_fertilizer_map = map(input, "soil-to-fertilizer map:\n")
-    fertilizer_to_water_map = map(input, "fertilizer-to-water map:\n")
-    water_to_light_map = map(input, "water-to-light map:\n")
-    light_to_temperature_map = map(input, "light-to-temperature map:\n")
-    temperature_to_humidity_map = map(input, "temperature-to-humidity map:\n")
-    humidity_to_location_map = map(input, "humidity-to-location map:\n")
+    soil_to_seed_map = map(input, "seed-to-soil map:\n")
+    fertilizer_to_soil_map = map(input, "soil-to-fertilizer map:\n")
+    water_to_fertilizer_map = map(input, "fertilizer-to-water map:\n")
+    light_to_water_map = map(input, "water-to-light map:\n")
+    temperature_to_light_map = map(input, "light-to-temperature map:\n")
+    humidity_to_temperature_map = map(input, "temperature-to-humidity map:\n")
+    location_to_humidity_map = map(input, "humidity-to-location map:\n")
 
-    Stream.iterate(0, &(&1 + 1))
+    Stream.iterate(init, &(&1 + 1))
     |> Enum.reduce_while(nil, fn location, nil ->
       IO.inspect(location)
 
       seed =
         location
-        |> get(humidity_to_location_map)
-        |> get(temperature_to_humidity_map)
-        |> get(light_to_temperature_map)
-        |> get(water_to_light_map)
-        |> get(fertilizer_to_water_map)
-        |> get(soil_to_fertilizer_map)
-        |> get(seed_to_soil_map)
+        |> get(location_to_humidity_map)
+        |> get(humidity_to_temperature_map)
+        |> get(temperature_to_light_map)
+        |> get(light_to_water_map)
+        |> get(water_to_fertilizer_map)
+        |> get(fertilizer_to_soil_map)
+        |> get(soil_to_seed_map)
 
       case Enum.any?(seeds, fn seed_range -> seed in seed_range end) do
         true -> {:halt, location}
@@ -370,13 +370,13 @@ defmodule Awesome2 do
     end)
   end
 
-  defp get(seed, map) do
-    case Enum.find(map, fn {source_range, _destination_range} -> seed in source_range end) do
+  defp get(source, map) do
+    case Enum.find(map, fn {source_range, _destination_range} -> source in source_range end) do
       nil ->
-        seed
+        source
 
       {source_range, destination_range} ->
-        index = seed - Enum.at(source_range, 0)
+        index = source - Enum.at(source_range, 0)
         Enum.at(destination_range, index)
     end
   end
@@ -422,5 +422,5 @@ Awesome2.run(input)
 ```
 
 ```elixir
-Awesome2.run(input2)
+Awesome2.run(input2, 2_000_000)
 ```
