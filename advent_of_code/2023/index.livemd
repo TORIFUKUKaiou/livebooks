@@ -6,3 +6,7 @@ Requires Livebook v0.11+.
 
 * [Day 1](day-01.livemd)
 * [Day 2](day-02.livemd)
+* [Day 3](day-03.livemd)
+* [Day 4](day-04.livemd)
+* [Day 5](day-05.livemd)
+* [Day 6](day-06.livemd)
