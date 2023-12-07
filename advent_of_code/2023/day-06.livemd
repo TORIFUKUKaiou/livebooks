@@ -1,0 +1,107 @@
+# Day 6
+
+## Day 6: Wait For It
+
+[Day 6: Wait For It](https://adventofcode.com/2023/day/6)
+
+## Input
+
+```elixir
+input = """
+Time:      7  15   30
+Distance:  9  40  200
+"""
+```
+
+## Part 1
+
+```elixir
+defmodule Awesome do
+  def run(input) do
+    races(input)
+    |> Enum.map(fn {time, distance} -> solve(time, distance) end)
+    |> Enum.product()
+  end
+
+  defp solve(time, distance) do
+    1..time
+    |> Enum.filter(fn t ->
+      speed = t
+      left_time = time - t
+      left_time * speed > distance
+    end)
+    |> Enum.count()
+  end
+
+  defp races(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn s ->
+      s
+      |> String.split(":")
+      |> Enum.at(-1)
+      |> String.split(" ", trim: true)
+      |> Enum.map(&String.to_integer/1)
+    end)
+    |> Enum.zip()
+  end
+end
+```
+
+```elixir
+Awesome.run(input)
+```
+
+```elixir
+puzzle_input = """
+Time:        57     72     69     92
+Distance:   291   1172   1176   2026
+"""
+```
+
+```elixir
+Awesome.run(puzzle_input)
+```
+
+## Part 2
+
+```elixir
+defmodule Awesome2 do
+  def run(input) do
+    [time, distance] = races(input)
+
+    solve(time, distance)
+  end
+
+  defp solve(time, distance) do
+    1..time
+    |> Enum.filter(fn t ->
+      speed = t
+      left_time = time - t
+      left_time * speed > distance
+    end)
+    |> Enum.count()
+  end
+
+  defp races(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn s ->
+      s
+      |> String.split(":")
+      |> Enum.at(-1)
+      |> String.split(" ", trim: true)
+      |> Enum.join()
+      |> String.to_integer()
+    end)
+  end
+end
+```
+
+```elixir
+Awesome2.run(input)
+```
+
+```elixir
+Awesome2.run(puzzle_input)
+```
