@@ -1,0 +1,64 @@
+# Day 10
+
+## Day 10: Pipe Maze
+
+[Day 10: Pipe Maze](https://adventofcode.com/2023/day/10)
+
+## Input
+
+```elixir
+input = """
+..F7.
+.FJ|.
+SJ.L7
+|F--J
+LJ...
+"""
+```
+
+## Part 1
+
+```elixir
+defmodule Awesome do
+  def run(input) do
+    map = parse(input)
+    start_position(map)
+  end
+
+  defp start_position(map) do
+    Enum.find(map, fn {_, value} -> value == ?S end)
+    |> elem(0)
+  end
+
+  defp parse(input) do
+    list_of_lists =
+      input
+      |> String.split("\n", trim: true)
+      |> Enum.map(&String.to_charlist/1)
+
+    [head | _] = list_of_lists
+    columns = Enum.count(head)
+    rows = Enum.count(list_of_lists)
+
+    for y <- 0..(rows - 1),
+        x <- 0..(columns - 1),
+        into: %{},
+        do: {{y, x}, list_of_lists |> Enum.at(y) |> Enum.at(x)}
+  end
+end
+```
+
+```elixir
+Awesome.run(input)
+```
+
+```elixir
+puzzle_input = """
+"""
+```
+
+```elixir
+Awesome.run(puzzle_input)
+```
+
+## Part 2
