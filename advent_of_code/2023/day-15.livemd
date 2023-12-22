@@ -60,3 +60,100 @@ Awesome.run(puzzle_input)
 ```
 
 ## Part 2
+
+```elixir
+defmodule Awesome2 do
+  def run(input) do
+    parse(input)
+    |> solve()
+  end
+
+  def hash(list) do
+    list
+    |> Enum.reduce(0, fn n, acc ->
+      algorithm(acc, n)
+    end)
+  end
+
+  defp solve(list_of_charlists) do
+    list_of_charlists
+    |> Enum.reduce(%{}, fn charlists, acc ->
+      do_solve(charlists, acc, Enum.any?(charlists, &(&1 == ?=)))
+    end)
+    |> calc_total_focusing_power()
+  end
+
+  defp do_solve(charlists, map, true), do: do_update(map, charlists)
+  defp do_solve(charlists, map, false), do: do_remove(map, charlists)
+
+  defp calc_total_focusing_power(map) do
+    map
+    |> Enum.reduce(0, fn {key, list}, power ->
+      list
+      |> Enum.reverse()
+      |> Enum.map(&elem(&1, 1))
+      |> Enum.with_index(1)
+      |> Enum.reduce(0, fn {focal_length, slot}, acc ->
+        acc + (key + 1) * focal_length * slot
+      end)
+      |> Kernel.+(power)
+    end)
+  end
+
+  defp do_update(map, charlists) do
+    current_label = current_label(charlists, 0..-3)
+    hash = current_label |> hash()
+    value = value(charlists)
+    list = Map.get(map, hash, [])
+    index = find_index(list, current_label)
+    new_list = new_list(list, index, {current_label, value})
+
+    Map.put(map, hash, new_list)
+  end
+
+  defp do_remove(map, charlists) do
+    current_label = current_label(charlists, 0..-2)
+    hash = current_label |> hash()
+    list = Map.get(map, hash, [])
+    index = find_index(list, current_label)
+    new_list = new_list(list, index)
+
+    Map.put(map, hash, new_list)
+  end
+
+  defp current_label(charlists, range), do: Enum.slice(charlists, range)
+
+  defp value(charlists), do: Enum.slice(charlists, -1..-1) |> Enum.at(0) |> Kernel.-(?0)
+
+  defp find_index(list, current_label) do
+    Enum.find_index(list, fn {label, _} -> current_label == label end)
+  end
+
+  defp new_list(list, nil = _index, label_value_tuple) do
+    [label_value_tuple | list]
+  end
+
+  defp new_list(list, index, label_value_tuple) do
+    List.replace_at(list, index, label_value_tuple)
+  end
+
+  defp new_list(list, nil = _index), do: list
+  defp new_list(list, index), do: List.delete_at(list, index)
+
+  defp algorithm(init, n), do: init |> Kernel.+(n) |> Kernel.*(17) |> rem(256)
+
+  defp parse(input) do
+    input
+    |> String.split(",", trim: true)
+    |> Enum.map(&(&1 |> String.trim() |> String.to_charlist()))
+  end
+end
+```
+
+```elixir
+Awesome2.run(input)
+```
+
+```elixir
+Awesome2.run(puzzle_input)
+```
