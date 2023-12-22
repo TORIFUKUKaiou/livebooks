@@ -35,7 +35,7 @@ defmodule Awesome do
     end)
   end
 
-  defp algorithm(init, n), do: rem((init + n) * 17, 256)
+  defp algorithm(init, n), do: init |> Kernel.+(n) |> Kernel.*(17) |> rem(256)
 
   defp parse(input) do
     input
