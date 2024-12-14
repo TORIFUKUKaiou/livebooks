@@ -1,0 +1,246 @@
+# 2024 Day 5
+
+## Day 5: Print Queue
+
+[Day 5: Print Queue](https://adventofcode.com/2024/day/5)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2024Day5Part1 do
+  def sum_middle_pages(input) do
+    {rules, updates} = parse_input(input)
+
+    updates
+    |> Enum.reduce(0, fn update, acc ->
+      if correct_order?(update, rules) do
+        middle_index = div(length(update), 2)
+        middle_page = Enum.at(update, middle_index)
+        acc + middle_page
+      else
+        acc
+      end
+    end)
+  end
+
+  defp parse_input(input) do
+    [rules_part, updates_part] = String.split(input, "\n\n", parts: 2)
+
+    rules =
+      rules_part
+      |> String.split("\n", trim: true)
+      |> Enum.map(fn line ->
+        [from_str, to_str] = String.split(line, "|")
+        from = String.to_integer(from_str)
+        to = String.to_integer(to_str)
+        {from, to}
+      end)
+      |> Enum.into(MapSet.new())
+
+    updates =
+      updates_part
+      |> String.split("\n", trim: true)
+      |> Enum.map(fn line ->
+        line
+        |> String.split(",", trim: true)
+        |> Enum.map(&String.to_integer/1)
+      end)
+
+    {rules, updates}
+  end
+
+  defp correct_order?(update, rules) do
+    index_map =
+      update
+      |> Enum.with_index()
+      |> Map.new()
+
+    applicable_rules =
+      rules
+      |> Enum.filter(fn {from, to} ->
+        Map.has_key?(index_map, from) and Map.has_key?(index_map, to)
+      end)
+
+    Enum.all?(applicable_rules, fn {from, to} ->
+      index_map[from] < index_map[to]
+    end)
+  end
+end
+
+# テストデータ
+input = """
+47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
+"""
+
+input
+|> AdventOfCode2024Day5Part1.sum_middle_pages()
+|> IO.puts()
+
+
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2024Day5Part2 do
+  def sum_corrected_middle_pages(input) do
+    {rules, updates} = parse_input(input)
+
+    updates
+    |> Enum.reduce(0, fn update, acc ->
+      if correct_order?(update, rules) do
+        acc
+      else
+        sorted_update = sort_update(update, rules)
+        middle_index = div(length(sorted_update), 2)
+        middle_page = Enum.at(sorted_update, middle_index)
+        acc + middle_page
+      end
+    end)
+  end
+
+  defp parse_input(input) do
+    [rules_part, updates_part] = String.split(input, "\n\n", parts: 2)
+
+    rules =
+      rules_part
+      |> String.split("\n", trim: true)
+      |> Enum.map(fn line ->
+        [from_str, to_str] = String.split(line, "|")
+        from = String.to_integer(from_str)
+        to = String.to_integer(to_str)
+        {from, to}
+      end)
+
+    updates =
+      updates_part
+      |> String.split("\n", trim: true)
+      |> Enum.map(fn line ->
+        line
+        |> String.split(",", trim: true)
+        |> Enum.map(&String.to_integer/1)
+      end)
+
+    {rules, updates}
+  end
+
+  defp correct_order?(update, rules) do
+    index_map =
+      update
+      |> Enum.with_index()
+      |> Map.new()
+
+    applicable_rules =
+      rules
+      |> Enum.filter(fn {from, to} ->
+        Map.has_key?(index_map, from) and Map.has_key?(index_map, to)
+      end)
+
+    Enum.all?(applicable_rules, fn {from, to} ->
+      index_map[from] < index_map[to]
+    end)
+  end
+
+  defp sort_update(update, rules) do
+    dep_map = build_dependency_map(update, rules)
+
+    update
+    |> Enum.sort(fn a, b ->
+      depends_on?(a, b, dep_map)
+    end)
+  end
+
+  defp build_dependency_map(update, rules) do
+    applicable_rules =
+      rules
+      |> Enum.filter(fn {from, to} ->
+        from in update and to in update
+      end)
+
+    Enum.reduce(applicable_rules, %{}, fn {from, to}, acc ->
+      Map.update(acc, from, [to], &[to | &1])
+    end)
+  end
+
+  defp depends_on?(a, b, dep_map, visited \\ MapSet.new()) do
+    cond do
+      a == b -> false
+      MapSet.member?(visited, a) -> false
+      true ->
+        children = Map.get(dep_map, a, [])
+
+        if b in children do
+          true
+        else
+          Enum.any?(children, fn child ->
+            depends_on?(child, b, dep_map, MapSet.put(visited, a))
+          end)
+        end
+    end
+  end
+end
+
+# テストデータ
+input = """
+47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
+"""
+
+input
+|> AdventOfCode2024Day5Part2.sum_corrected_middle_pages()
+|> IO.puts()
+
+```

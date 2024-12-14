@@ -1,0 +1,89 @@
+# 2024 Day 1
+
+## Day 1: Historian Hysteria
+
+[Day 1: Historian Hysteria](https://adventofcode.com/2024/day/1)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2024Day1Part1 do
+  def calculate_total_distance(left_list, right_list) do
+    sorted_left = Enum.sort(left_list)
+    sorted_right = Enum.sort(right_list)
+
+    distances =
+      Enum.zip(sorted_left, sorted_right)
+      |> Enum.map(fn {left, right} -> abs(left - right) end)
+
+    Enum.sum(distances)
+  end
+
+  def parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      [left, right] = String.split(line, ~r/\s+/, trim: true)
+      {String.to_integer(left), String.to_integer(right)}
+    end)
+    |> Enum.unzip()
+  end
+end
+
+# テストデータ
+input = """
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+"""
+
+{left_list, right_list} = AdventOfCode2024Day1Part1.parse_input(input)
+
+# 距離の計算
+total_distance = AdventOfCode2024Day1Part1.calculate_total_distance(left_list, right_list)
+IO.puts("Total distance: #{total_distance}")
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2024Day1Part2 do
+  def calculate_similarity_score(left_list, right_list) do
+    right_counts = Enum.frequencies(right_list)
+
+    Enum.reduce(left_list, 0, fn num, acc ->
+      count = Map.get(right_counts, num, 0)
+      acc + num * count
+    end)
+  end
+
+  def parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      [left, right] = String.split(line, ~r/\s+/, trim: true)
+      {String.to_integer(left), String.to_integer(right)}
+    end)
+    |> Enum.unzip()
+  end
+end
+
+# テストデータ
+input = """
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+"""
+
+{left_list, right_list} = AdventOfCode2024Day1Part2.parse_input(input)
+
+# 類似度スコアの計算
+similarity_score = AdventOfCode2024Day1Part2.calculate_similarity_score(left_list, right_list)
+IO.puts("Similarity score: #{similarity_score}")
+```

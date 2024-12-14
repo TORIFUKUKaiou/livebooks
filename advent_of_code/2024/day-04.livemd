@@ -1,0 +1,140 @@
+# 2024 Day 4
+
+## Day 4: Ceres Search
+
+[Day 4: Ceres Search](https://adventofcode.com/2024/day/4)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2024Day4Part1 do
+  def count_xmas(input) do
+    grid = parse_input(input)
+    directions = [
+      {1, 0},  # 水平
+      {0, 1},  # 垂直
+      {1, 1},  # 斜め（右下）
+      {1, -1}, # 斜め（右上）
+      {-1, 0}, # 水平（逆）
+      {0, -1}, # 垂直（逆）
+      {-1, -1},# 斜め（左上）
+      {-1, 1}  # 斜め（左下）
+    ]
+
+    Enum.reduce(0..(length(grid) - 1), 0, fn row, acc ->
+      Enum.reduce(0..(length(grid) - 1), acc, fn col, acc2 ->
+        acc2 + Enum.reduce(directions, 0, fn {dx, dy}, acc3 ->
+          acc3 + if match_xmas?(grid, row, col, dx, dy), do: 1, else: 0
+        end)
+      end)
+    end)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.graphemes/1)
+  end
+
+  defp match_xmas?(grid, row, col, dx, dy) do
+    word = "XMAS"
+    Enum.all?(0..3, fn i ->
+      r = row + i * dx
+      c = col + i * dy
+      r >= 0 and r < length(grid) and c >= 0 and c < length(grid) and Enum.at(grid, r) |> Enum.at(c) == String.at(word, i)
+    end)
+  end
+end
+
+# テストデータ
+input = """
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+"""
+
+input
+|> AdventOfCode2024Day4Part1.count_xmas()
+|> IO.puts()
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2024Day4Part2 do
+  def count_xmas(input) do
+    grid = parse_input(input)
+    size = length(grid)
+
+    Enum.reduce(1..(size - 2), 0, fn row, acc ->
+      Enum.reduce(1..(size - 2), acc, fn col, acc2 ->
+        acc2 + if match_x_mas?(grid, row, col), do: 1, else: 0
+      end)
+    end)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.graphemes/1)
+  end
+
+  defp match_x_mas?(grid, row, col) do
+    mas_variants = [["M", "A", "S"], ["S", "A", "M"]]
+
+    Enum.any?(mas_variants, fn mas1 ->
+      Enum.any?(mas_variants, fn mas2 ->
+        match_arms?(grid, row, col, mas1, mas2)
+      end)
+    end)
+  end
+
+  defp match_arms?(grid, row, col, mas1, mas2) do
+    [mas1_positions, mas2_positions] = [
+      [{-1, -1}, {0, 0}, {1, 1}],
+      [{-1, 1}, {0, 0}, {1, -1}]
+    ]
+
+    match_arm?(grid, row, col, mas1, mas1_positions) and
+      match_arm?(grid, row, col, mas2, mas2_positions)
+  end
+
+  defp match_arm?(grid, row, col, [m, a, s], deltas) do
+    Enum.zip([m, a, s], deltas)
+    |> Enum.all?(fn {char, {dx, dy}} ->
+      x = row + dx
+      y = col + dy
+      in_bounds?(grid, x, y) and Enum.at(grid, x) |> Enum.at(y) == char
+    end)
+  end
+
+  defp in_bounds?(grid, x, y) do
+    x >= 0 and y >= 0 and x < length(grid) and y < length(Enum.at(grid, 0))
+  end
+end
+
+# 使用例
+input = """
+MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX
+"""
+
+input
+|> AdventOfCode2024Day4Part2.count_xmas()
+|> IO.puts()
+```
