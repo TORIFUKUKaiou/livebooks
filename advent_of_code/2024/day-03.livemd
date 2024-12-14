@@ -1,0 +1,70 @@
+# 2024 Day 3
+
+## Day 3: Mull It Over
+
+[Day 3: Mull It Over](https://adventofcode.com/2024/day/3)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2024Day3Part1 do
+  def sum_valid_multiplications(input) do
+    regex = ~r/mul\((\d+),(\d+)\)/
+
+    regex
+    |> Regex.scan(input)
+    |> Enum.map(fn [_, x, y] -> String.to_integer(x) * String.to_integer(y) end)
+    |> Enum.sum()
+  end
+end
+
+# テストデータ
+input = """
+xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
+"""
+
+input
+|> AdventOfCode2024Day3Part1.sum_valid_multiplications()
+|> IO.puts()
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2024Day3Part2 do
+  def sum_valid_multiplications(input) do
+    regex_mul = ~r/mul\((\d+),(\d+)\)/
+    regex_do = ~r/do\(\)/
+    regex_dont = ~r/don't\(\)/
+
+    input
+    |> String.split(~r/(?=mul\(|do\(\)|don't\(\))/)
+    |> Enum.reduce({true, 0}, fn segment, {enabled, sum} ->
+      cond do
+        Regex.match?(regex_do, segment) ->
+          {true, sum}
+
+        Regex.match?(regex_dont, segment) ->
+          {false, sum}
+
+        enabled and Regex.match?(regex_mul, segment) ->
+          [[_, x, y]] = Regex.scan(regex_mul, segment)
+          {enabled, sum + String.to_integer(x) * String.to_integer(y)}
+
+        true ->
+          {enabled, sum}
+      end
+    end)
+    |> elem(1)
+  end
+end
+
+# テストデータ
+input = """
+xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+"""
+
+input
+|> AdventOfCode2024Day3Part2.sum_valid_multiplications()
+|> IO.puts()
+```
