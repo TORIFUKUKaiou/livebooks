@@ -1,0 +1,225 @@
+# 2024 Day 6
+
+## Day 6: Guard Gallivant
+
+[Day 6: Guard Gallivant](https://adventofcode.com/2024/day/6)
+
+## Part 1
+
+まず、以下の手順で実装します。
+
+1. 入力を解析してグリッドを作成。
+2. ガードの開始位置と向きを特定。
+3. ガードの移動をシミュレート。
+   * 前方に障害物またはマップ外の場合、右に90度回転。
+   * それ以外の場合、前進。
+   * 訪れた位置を記録。
+4. ガードがマップから出るまで繰り返す。
+5. 訪れた位置の総数を返す。
+
+```elixir
+defmodule AdventOfCode2024Day6Part1 do
+  def count_visited_positions(input) do
+    grid = parse_input(input)
+    {guard_pos, dir_index} = find_guard(grid)
+    visited = MapSet.new([guard_pos])
+    grid_size = {length(grid), length(Enum.at(grid, 0))}
+    directions = [{0, -1}, {1, 0}, {0, 1}, {-1, 0}]  # 上、右、下、左
+
+    {_, _, visited_positions} =
+      simulate(grid, guard_pos, dir_index, visited, grid_size, directions)
+
+    MapSet.size(visited_positions)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.graphemes/1)
+  end
+
+  defp find_guard(grid) do
+    direction_map = %{
+      "^" => 0,  # 上
+      ">" => 1,  # 右
+      "v" => 2,  # 下
+      "<" => 3   # 左
+    }
+
+    Enum.with_index(grid)
+    |> Enum.reduce_while(nil, fn {row, y}, _ ->
+      Enum.with_index(row)
+      |> Enum.find_value(fn {cell, x} ->
+        case Map.get(direction_map, cell) do
+          nil -> nil
+          dir_index -> {{x, y}, dir_index}
+        end
+      end)
+      |> case do
+        nil -> {:cont, nil}
+        result -> {:halt, result}
+      end
+    end)
+  end
+
+  defp simulate(grid, {x, y}, dir_index, visited, {height, width}, directions) do
+    dir = Enum.at(directions, dir_index)
+    {dx, dy} = dir
+    nx = x + dx
+    ny = y + dy
+
+    cond do
+      nx < 0 or nx >= width or ny < 0 or ny >= height ->
+        # マップ外に出た
+        {{x, y}, dir_index, visited}
+
+      Enum.at(Enum.at(grid, ny), nx) == "#" ->
+        # 障害物があるので右に90度回転
+        new_dir_index = rem(dir_index + 1, 4)
+        simulate(grid, {x, y}, new_dir_index, visited, {height, width}, directions)
+
+      true ->
+        # 前進
+        new_visited = MapSet.put(visited, {nx, ny})
+        simulate(grid, {nx, ny}, dir_index, new_visited, {height, width}, directions)
+    end
+  end
+end
+
+# 使用例
+input = """
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+"""
+
+input |> AdventOfCode2024Day6Part1.count_visited_positions() |> IO.puts()
+```
+
+## Part 2
+
+Part 2では、ガードがループに陥るような障害物の設置位置をすべて特定する必要があります。以下の手順で実装します。
+
+1. 入力からグリッドを解析します。
+2. ガードの開始位置と方向を特定します。
+3. 障害物を設置できるすべての位置（ガードの開始位置と既存の障害物を除く）を取得します。
+4. 各可能な位置に障害物を追加し、ガードがループに陥るかをシミュレートします。
+5. ガードがループする場合、その位置をカウントします。
+
+```elixir
+defmodule AdventOfCode2024Day6Part2 do
+  def count_obstruction_positions(input) do
+    grid = parse_input(input)
+    {guard_pos, guard_dir_index} = find_guard(grid)
+    grid_size = {length(grid), length(Enum.at(grid, 0))}
+    directions = [{0, -1}, {1, 0}, {0, 1}, {-1, 0}]  # 上、右、下、左
+
+    # 設置可能な位置（ガードの開始位置と既存の障害物を除く）
+    possible_positions = for y <- 0..(length(grid) - 1),
+                             x <- 0..(length(Enum.at(grid, 0)) - 1),
+                             Enum.at(Enum.at(grid, y), x) == ".",
+                             {x, y} != guard_pos,
+                             do: {x, y}
+
+    # 各位置に障害物を設置し、ループするかチェック
+    possible_positions
+    |> Enum.filter(fn obstruction_pos ->
+      new_grid = put_obstruction(grid, obstruction_pos)
+      simulate_with_loop_detection(new_grid, guard_pos, guard_dir_index, grid_size, directions)
+    end)
+    |> Enum.count()
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.graphemes/1)
+  end
+
+  defp find_guard(grid) do
+    direction_map = %{
+      "^" => 0,  # 上
+      ">" => 1,  # 右
+      "v" => 2,  # 下
+      "<" => 3   # 左
+    }
+
+    Enum.with_index(grid)
+    |> Enum.reduce_while(nil, fn {row, y}, _ ->
+      Enum.with_index(row)
+      |> Enum.find_value(fn {cell, x} ->
+        case Map.get(direction_map, cell) do
+          nil -> nil
+          dir_index -> {{x, y}, dir_index}
+        end
+      end)
+      |> case do
+        nil -> {:cont, nil}
+        result -> {:halt, result}
+      end
+    end)
+  end
+
+  defp put_obstruction(grid, {x, y}) do
+    List.update_at(grid, y, fn row ->
+      List.update_at(row, x, fn _ -> "#" end)
+    end)
+  end
+
+  defp simulate_with_loop_detection(grid, guard_pos, dir_index, grid_size, directions) do
+    visited = MapSet.new()
+    simulate_loop(grid, guard_pos, dir_index, grid_size, directions, visited)
+  end
+
+  defp simulate_loop(grid, {x, y} = pos, dir_index, {height, width}, directions, visited) do
+    if MapSet.member?(visited, {pos, dir_index}) do
+      # ループ検出
+      true
+    else
+      dir = Enum.at(directions, dir_index)
+      {dx, dy} = dir
+      nx = x + dx
+      ny = y + dy
+
+      cond do
+        nx < 0 or nx >= width or ny < 0 or ny >= height ->
+          # マップ外に出た
+          false
+
+        Enum.at(Enum.at(grid, ny), nx) == "#" ->
+          # 障害物があるので右に90度回転
+          new_dir_index = rem(dir_index + 1, 4)
+          simulate_loop(grid, pos, new_dir_index, {height, width}, directions, MapSet.put(visited, {pos, dir_index}))
+
+        true ->
+          # 前進
+          simulate_loop(grid, {nx, ny}, dir_index, {height, width}, directions, MapSet.put(visited, {pos, dir_index}))
+      end
+    end
+  end
+end
+
+# 使用例
+input = """
+....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+"""
+
+input |> AdventOfCode2024Day6Part2.count_obstruction_positions() |> IO.puts()
+
+```
