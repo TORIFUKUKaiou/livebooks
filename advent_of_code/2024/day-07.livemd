@@ -1,0 +1,149 @@
+# 2024 Day7
+
+## Day 7: Bridge Repair
+
+[Day 7: Bridge Repair](https://adventofcode.com/2024/day/7)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2024Day7Part1 do
+  def total_calibration_result(input) do
+    input
+    |> parse_input()
+    |> Enum.filter(fn {target, numbers} ->
+      valid_equation?(target, numbers)
+    end)
+    |> Enum.map(fn {target, _} -> target end)
+    |> Enum.sum()
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      [left, right] = String.split(line, ":")
+      target = String.trim(left) |> String.to_integer()
+      numbers = String.split(right) |> Enum.map(&String.to_integer/1)
+      {target, numbers}
+    end)
+  end
+
+  defp valid_equation?(target, numbers) do
+    operators = [:+, :*]
+
+    operator_permutations(length(numbers) - 1, operators)
+    |> Enum.any?(fn ops ->
+      evaluate_expression(numbers, ops) == target
+    end)
+  end
+
+  defp operator_permutations(0, _operators), do: [[]]
+
+  defp operator_permutations(n, operators) do
+    for op <- operators,
+        rest <- operator_permutations(n - 1, operators) do
+      [op | rest]
+    end
+  end
+
+  defp evaluate_expression([first | rest_numbers], operators) do
+    Enum.zip(rest_numbers, operators)
+    |> Enum.reduce(first, fn {num, op}, acc ->
+      apply_operation(acc, op, num)
+    end)
+  end
+
+  defp apply_operation(a, :+, b), do: a + b
+  defp apply_operation(a, :*, b), do: a * b
+end
+
+# 使用例
+input = """
+190: 10 19
+3267: 81 40 27
+83: 17 5
+156: 15 6
+7290: 6 8 6 15
+161011: 16 10 13
+192: 17 8 14
+21037: 9 7 18 13
+292: 11 6 16 20
+"""
+
+input |> AdventOfCode2024Day7Part1.total_calibration_result() |> IO.puts()
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2024Day7Part2 do
+  def total_calibration_result(input) do
+    input
+    |> parse_input()
+    |> Enum.filter(fn {target, numbers} ->
+      valid_equation?(target, numbers)
+    end)
+    |> Enum.map(fn {target, _} -> target end)
+    |> Enum.sum()
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      [left, right] = String.split(line, ":")
+      target = String.trim(left) |> String.to_integer()
+      numbers = String.split(right) |> Enum.map(&String.to_integer/1)
+      {target, numbers}
+    end)
+  end
+
+  defp valid_equation?(target, numbers) do
+    operators = [:+, :*, :||]
+
+    operator_permutations(length(numbers) - 1, operators)
+    |> Enum.any?(fn ops ->
+      evaluate_expression(numbers, ops) == target
+    end)
+  end
+
+  defp operator_permutations(0, _operators), do: [[]]
+
+  defp operator_permutations(n, operators) do
+    for op <- operators,
+        rest <- operator_permutations(n - 1, operators) do
+      [op | rest]
+    end
+  end
+
+  defp evaluate_expression([first | rest_numbers], operators) do
+    Enum.zip(rest_numbers, operators)
+    |> Enum.reduce(first, fn {num, op}, acc ->
+      apply_operation(acc, op, num)
+    end)
+  end
+
+  defp apply_operation(a, :+, b), do: a + b
+  defp apply_operation(a, :*, b), do: a * b
+  defp apply_operation(a, :||, b) do
+    String.to_integer("#{a}#{b}")
+  end
+end
+
+# 使用例
+input = """
+190: 10 19
+3267: 81 40 27
+83: 17 5
+156: 15 6
+7290: 6 8 6 15
+161011: 16 10 13
+192: 17 8 14
+21037: 9 7 18 13
+292: 11 6 16 20
+"""
+
+input |> AdventOfCode2024Day7Part2.total_calibration_result() |> IO.inspect()
+
+```
