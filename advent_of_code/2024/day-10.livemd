@@ -1,0 +1,164 @@
+# 2024 Day 10
+
+## Day 10: Hoof It
+
+[Day 10: Hoof It](https://adventofcode.com/2024/day/10)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2024Day10Part1 do
+  def solve(input) do
+    grid = parse_grid(input)
+    dims = get_dimensions(grid)
+
+    find_trailheads(grid)
+    |> Enum.map(&count_reachable_peaks(&1, grid, dims))
+    |> Enum.sum()
+  end
+
+  defp parse_grid(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.graphemes/1)
+    |> Enum.map(fn row -> Enum.map(row, &String.to_integer/1) end)
+  end
+
+  defp get_dimensions(grid) do
+    {length(hd(grid)), length(grid)}
+  end
+
+  defp find_trailheads(grid) do
+    for {row, y} <- Enum.with_index(grid),
+        {height, x} <- Enum.with_index(row),
+        height == 0,
+        do: {x, y}
+  end
+
+  defp count_reachable_peaks(start, grid, dims) do
+    bfs([{start, 0}], MapSet.new([start]), MapSet.new(), grid, dims)
+    |> MapSet.size()
+  end
+
+  defp bfs([], _visited, peaks, _grid, _dims), do: peaks
+  defp bfs([{{x, y}, height} | rest], visited, peaks, grid, dims) do
+    curr_height = get_height(grid, {x, y})
+
+    if curr_height == 9 do
+      bfs(rest, visited, MapSet.put(peaks, {x, y}), grid, dims)
+    else
+      neighbors = get_valid_neighbors({x, y}, curr_height, grid, dims, visited)
+      new_visited = Enum.reduce(neighbors, visited, &MapSet.put(&2, &1))
+      new_queue = rest ++ Enum.map(neighbors, &{&1, height + 1})
+      bfs(new_queue, new_visited, peaks, grid, dims)
+    end
+  end
+
+  defp get_height(grid, {x, y}) do
+    Enum.at(grid, y) |> Enum.at(x)
+  end
+
+  defp get_valid_neighbors({x, y}, height, grid, {width, height_limit}, visited) do
+    [{x+1, y}, {x-1, y}, {x, y+1}, {x, y-1}]
+    |> Enum.filter(fn {nx, ny} ->
+      nx >= 0 and nx < width and
+      ny >= 0 and ny < height_limit and
+      not MapSet.member?(visited, {nx, ny}) and
+      get_height(grid, {nx, ny}) == height + 1
+    end)
+  end
+end
+
+# Test with example input
+input = """
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732
+"""
+input |> AdventOfCode2024Day10Part1.solve() |> IO.puts()
+
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2024Day10Part2 do
+  def solve(input) do
+    grid = parse_grid(input)
+    dims = get_dimensions(grid)
+
+    find_trailheads(grid)
+    |> Enum.map(&count_unique_paths(&1, grid, dims))
+    |> Enum.sum()
+  end
+
+  defp parse_grid(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.graphemes/1)
+    |> Enum.map(fn row -> Enum.map(row, &String.to_integer/1) end)
+  end
+
+  defp get_dimensions(grid) do
+    {length(hd(grid)), length(grid)}
+  end
+
+  defp find_trailheads(grid) do
+    for {row, y} <- Enum.with_index(grid),
+        {height, x} <- Enum.with_index(row),
+        height == 0,
+        do: {x, y}
+  end
+
+  defp count_unique_paths(start, grid, dims) do
+    dfs(start, grid, dims, MapSet.new([start]))
+  end
+
+  defp dfs(pos, grid, dims, visited) do
+    curr_height = get_height(grid, pos)
+
+    if curr_height == 9 do
+      1
+    else
+      next_positions = get_valid_next_positions(pos, curr_height, grid, dims, visited)
+
+      Enum.reduce(next_positions, 0, fn next_pos, sum ->
+        sum + dfs(next_pos, grid, dims, MapSet.put(visited, next_pos))
+      end)
+    end
+  end
+
+  defp get_height(grid, {x, y}) do
+    Enum.at(grid, y) |> Enum.at(x)
+  end
+
+  defp get_valid_next_positions({x, y}, height, grid, {width, height_limit}, visited) do
+    [{x+1, y}, {x-1, y}, {x, y+1}, {x, y-1}]
+    |> Enum.filter(fn {nx, ny} ->
+      nx >= 0 and nx < width and
+      ny >= 0 and ny < height_limit and
+      not MapSet.member?(visited, {nx, ny}) and
+      get_height(grid, {nx, ny}) == height + 1
+    end)
+  end
+end
+
+# Test with example input
+input = """
+89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732
+"""
+input |> AdventOfCode2024Day10Part2.solve() |> IO.puts()
+
+```
