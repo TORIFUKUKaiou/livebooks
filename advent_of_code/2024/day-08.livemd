@@ -1,0 +1,158 @@
+# 2024 Day8
+
+## Day 8: Resonant Collinearity
+
+[Day 8: Resonant Collinearity](https://adventofcode.com/2024/day/8)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2024Day8Part1 do
+  @spec solve(String.t()) :: non_neg_integer()
+  def solve(input) do
+    grid =
+      input
+      |> String.split("\n", trim: true)
+
+    height = length(grid)
+    width = grid |> hd() |> String.length()
+
+    frequencies =
+      grid
+      |> Enum.with_index()
+      |> Enum.reduce(%{}, fn {line, row}, acc ->
+        line
+        |> String.graphemes()
+        |> Enum.with_index()
+        |> Enum.reduce(acc, fn
+          {".", _col}, acc -> acc
+          {freq, col}, acc -> Map.update(acc, freq, [{row, col}], &[{row, col} | &1])
+        end)
+      end)
+
+    frequencies
+    |> Enum.reduce(MapSet.new(), fn {_freq, coords}, antinodes ->
+      coords
+      |> Enum.reduce(antinodes, fn {r1, c1}, set ->
+        coords
+        |> Enum.reduce(set, fn {r2, c2}, acc ->
+          if r1 == r2 and c1 == c2 do
+            acc
+          else
+            dr = r2 - r1
+            dc = c2 - c1
+
+            [{r1 - dr, c1 - dc}, {r2 + dr, c2 + dc}]
+            |> Enum.reduce(acc, fn candidate, inner_acc ->
+              if in_bounds?(candidate, height, width),
+                do: MapSet.put(inner_acc, candidate),
+                else: inner_acc
+            end)
+          end
+        end)
+      end)
+    end)
+    |> MapSet.size()
+  end
+
+  defp in_bounds?({row, col}, height, width) do
+    row >= 0 and row < height and col >= 0 and col < width
+  end
+end
+```
+
+```elixir
+input = """
+............
+........0...
+.....0......
+.......0....
+....0.......
+......A.....
+............
+............
+........A...
+.........A..
+............
+............
+"""
+```
+
+```elixir
+AdventOfCode2024Day8Part1.solve(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2024Day8Part2 do
+  @spec solve(String.t()) :: non_neg_integer()
+  def solve(input) do
+    grid =
+      input
+      |> String.split("\n", trim: true)
+
+    height = length(grid)
+    width = grid |> hd() |> String.length()
+
+    frequencies =
+      grid
+      |> Enum.with_index()
+      |> Enum.reduce(%{}, fn {line, row}, acc ->
+        line
+        |> String.graphemes()
+        |> Enum.with_index()
+        |> Enum.reduce(acc, fn
+          {".", _col}, acc -> acc
+          {freq, col}, acc -> Map.update(acc, freq, [{row, col}], &[{row, col} | &1])
+        end)
+      end)
+
+    frequencies
+    |> Enum.reduce(MapSet.new(), fn {_freq, coords}, antinodes ->
+      coords_with_idx = Enum.with_index(coords)
+
+      Enum.reduce(coords_with_idx, antinodes, fn {{r1, c1}, idx1}, set ->
+        Enum.reduce(coords_with_idx, set, fn
+          {{_r2, _c2}, idx2}, acc when idx2 <= idx1 ->
+            acc
+
+          {{r2, c2}, _idx2}, acc ->
+            dr = r2 - r1
+            dc = c2 - c1
+            step_divisor = Integer.gcd(abs(dr), abs(dc))
+            step = {div(dr, step_divisor), div(dc, step_divisor)}
+
+            extend_line(acc, {r1, c1}, step, height, width)
+        end)
+      end)
+    end)
+    |> MapSet.size()
+  end
+
+  defp extend_line(set, {r, c}, {dr, dc}, height, width) do
+    set
+    |> put_along({r - dr, c - dc}, {-dr, -dc}, height, width)
+    |> MapSet.put({r, c})
+    |> put_along({r + dr, c + dc}, {dr, dc}, height, width)
+  end
+
+  defp put_along(set, {r, c} = point, {dr, dc}, height, width) do
+    if in_bounds?(point, height, width) do
+      set
+      |> MapSet.put(point)
+      |> put_along({r + dr, c + dc}, {dr, dc}, height, width)
+    else
+      set
+    end
+  end
+
+  defp in_bounds?({row, col}, height, width) do
+    row >= 0 and row < height and col >= 0 and col < width
+  end
+end
+```
+
+```elixir
+AdventOfCode2024Day8Part2.solve(input)
+```
