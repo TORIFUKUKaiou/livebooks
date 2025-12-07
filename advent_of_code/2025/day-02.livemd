@@ -1,0 +1,132 @@
+# Day 2: Gift Shop
+
+## Day 2: Gift Shop
+
+[Day 2: Gift Shop](https://adventofcode.com/2025/day/2)
+
+## Part 1
+
+```elixir
+defmodule AwesomeInvalidIDCheckerPart1 do
+  def run(number) do
+    charlist = number
+    |> Integer.to_string() 
+    |> String.to_charlist()
+
+    maybe_invalid = charlist
+    |> Enum.frequencies
+    |> Enum.all?(fn {_, cnt} -> rem(cnt, 2) == 0 end)
+
+    if maybe_invalid do
+      len = Enum.count(charlist)
+      head = charlist |> Enum.slice(0..(div(len, 2) - 1))
+      tail = charlist |> Enum.slice(div(len, 2)..(len - 1))
+      head == tail
+    else
+      false
+    end
+  end
+end
+
+defmodule AdventOfCode2025Day2Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_ranges) do
+    list_of_ranges
+    |> Enum.reduce(0, fn range, acc ->
+      range
+      |> Enum.reduce(acc, fn number, acc ->
+        fun(AwesomeInvalidIDCheckerPart1.run(number), number, acc)
+      end)
+    end)
+  end
+
+  defp fun(true, number, acc), do: number + acc
+  defp fun(false, _number, acc), do: acc
+
+  defp parse_input(input) do
+    input
+    |> String.split(",", trim: true)
+    |> Enum.map(&parse/1)
+  end
+
+  defp parse(range) do
+    %{"first" => first, "last" => last} = Regex.named_captures(~r/(?<first>\d+)-(?<last>\d+)/, range)
+    Range.new(String.to_integer(first), String.to_integer(last))
+  end
+end
+```
+
+```elixir
+input = """
+11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124
+"""
+
+AdventOfCode2025Day2Part1.run(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AwesomeInvalidIDCheckerPart2 do
+  def run(number) do
+    charlist = number
+    |> Integer.to_string() 
+    |> String.to_charlist()
+
+    if Enum.count(charlist) > 1 do
+      1..div(Enum.count(charlist), 2)
+      |> Enum.any?(fn count ->
+        [head | tail] = Enum.chunk_every(charlist, count)
+        Enum.all?(tail, & &1 == head)
+      end)
+    else
+      false
+    end
+  end
+end
+
+defmodule AdventOfCode2025Day2Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_ranges) do
+    list_of_ranges
+    |> Enum.reduce(0, fn range, acc ->
+      range
+      |> Enum.reduce(acc, fn number, acc ->
+        fun(AwesomeInvalidIDCheckerPart2.run(number), number, acc)
+      end)
+    end)
+  end
+
+  defp fun(true, number, acc), do: number + acc
+  defp fun(false, _number, acc), do: acc
+
+  defp parse_input(input) do
+    input
+    |> String.split(",", trim: true)
+    |> Enum.map(&parse/1)
+  end
+
+  defp parse(range) do
+    %{"first" => first, "last" => last} = Regex.named_captures(~r/(?<first>\d+)-(?<last>\d+)/, range)
+    Range.new(String.to_integer(first), String.to_integer(last))
+  end
+end
+```
+
+```elixir
+input = """
+11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124
+"""
+
+AdventOfCode2025Day2Part2.run(input)
+```
