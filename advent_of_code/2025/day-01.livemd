@@ -1,0 +1,131 @@
+# 2025 Day 1
+
+## Day 1: Secret Entrance
+
+[Day 1: Secret Entrance](https://adventofcode.com/2025/day/1)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2025Day1Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+  
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse/1)
+  end
+
+  defp solve(list) do
+    list
+    |> Enum.reduce([50], &rotate/2)
+    |> Enum.count(& &1 == 0)
+  end
+
+  defp rotate({:left, number}, [current | _] = acc) do
+    new_current = normalize(current - number)
+    [new_current | acc]
+  end
+
+  defp rotate({:right, number}, [current | _] = acc) do
+    new_current = normalize(current + number)
+    [new_current | acc]
+  end
+
+  defp normalize(number) when number > 99, do: normalize(number - 100)
+  defp normalize(number) when number < 0, do: normalize(100 + number)
+  defp normalize(number), do: number
+
+  defp parse(<<"L", number::binary>>), do: {:left, String.to_integer(number)}
+  defp parse(<<"R", number::binary>>), do: {:right, String.to_integer(number)}
+end
+```
+
+```elixir
+input = """
+L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82
+"""
+
+AdventOfCode2025Day1Part1.run(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day1Part2 do
+  def run(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse/1)
+    |> Enum.reduce({[50], 0}, &rotate/2)
+    |> elem(1)
+  end
+
+  defp rotate({:left, number}, {[current | _] = list, count}) do
+    {new_current, new_count} = move(current, -number)
+    {[new_current | list], count + new_count}
+  end
+
+  defp rotate({:right, number}, {[current | _] = list, count}) do
+    {new_current, new_count} = move(current, number)
+    {[new_current | list], count + new_count}
+  end
+
+  defp move(0, distance) when distance < 0 do
+    {normalize(distance), div(distance, 100) * -1}
+  end
+
+  defp move(current, distance) when (current + distance) == 0 do
+    {0, 1}
+  end
+
+  defp move(current, distance) when distance < 0 and (current + distance) < 0 do
+    {normalize(current + distance), div(current + distance, 100) * -1 + 1}
+  end
+
+  defp move(current, distance) when distance < 0 do
+    {normalize(current + distance), div(current + distance, 100) * -1}
+  end
+
+  defp move(current, distance) do
+    {normalize(current + distance), div(current + distance, 100)}
+  end
+
+  defp normalize(number) when number > 99, do: normalize(number - 100)
+  defp normalize(number) when number < 0, do: normalize(100 + number)
+  defp normalize(number), do: number
+
+  defp parse(<<"L", num::binary>>), do: {:left, String.to_integer(num)}
+  defp parse(<<"R", num::binary>>), do: {:right, String.to_integer(num)}
+end
+```
+
+```elixir
+input = """
+L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82
+"""
+
+AdventOfCode2025Day1Part2.run(input)
+```
