@@ -1,0 +1,119 @@
+# Day 3: Lobby
+
+## Day 3: Lobby
+
+[Day 3: Lobby](https://adventofcode.com/2025/day/3)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2025Day3Part1Solver do
+  def run(list_of_lists) do
+    list_of_lists
+    |> Enum.reduce(0, fn list, acc ->
+      upper = Enum.slice(list, 0..-2//1) |> Enum.max()
+      uppser_index = Enum.find_index(list, & &1 == upper)
+      lower = Enum.slice(list, (uppser_index + 1)..-1//1) |> Enum.max()
+
+      acc + upper * 10 + lower
+    end)
+  end
+end
+
+defmodule AdventOfCode2025Day3Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_lists) do
+    AdventOfCode2025Day3Part1Solver.run(list_of_lists)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse/1)
+  end
+
+  defp parse(line) do
+    line
+    |> String.to_charlist()
+    |> Enum.map(& &1 - ?0)
+  end
+end
+```
+
+```elixir
+input = """
+987654321111111
+811111111111119
+234234234234278
+818181911112111
+"""
+
+AdventOfCode2025Day3Part1.run(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day3Part2Solver do
+  def run(list_of_lists) do
+    list_of_lists
+    |> Enum.reduce(0, fn list, acc ->
+      12..1//-1
+      |> Enum.reduce({0, -1}, 
+        fn i, {acc, index} ->
+          {max, new_index} = Enum.slice(list, (index + 1)..-i//1) |> find_max()
+          {(10 ** (i - 1)) * max + acc, new_index + index + 1} 
+      end)
+      |> elem(0)
+      |> Kernel.+(acc)
+    end)
+    
+  end
+
+  defp find_max(list) do
+    max = Enum.max(list)
+    index = Enum.find_index(list, & &1 == max)
+    {max, index}
+  end
+end
+
+defmodule AdventOfCode2025Day3Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_lists) do
+    AdventOfCode2025Day3Part2Solver.run(list_of_lists)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&parse/1)
+  end
+
+  defp parse(line) do
+    line
+    |> String.to_charlist()
+    |> Enum.map(& &1 - ?0)
+  end
+end
+```
+
+```elixir
+input = """
+987654321111111
+811111111111119
+234234234234278
+818181911112111
+"""
+
+AdventOfCode2025Day3Part2.run(input)
+```
