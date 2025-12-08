@@ -2,6 +2,10 @@
 
 My solutions for [Advent of Code](https://adventofcode.com/).
 
+## 2025
+
+[![Run in Livebook](https://livebook.dev/badge/v1/pink.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2FTORIFUKUKaiou%2Flivebooks%2Ftree%2Fmain%2Fadvent_of_code%2F2025%2Findex.livemd)
+
 ## 2024
 
 [![Run in Livebook](https://livebook.dev/badge/v1/blue.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2FTORIFUKUKaiou%2Flivebooks%2Fblob%2Fmain%2Fadvent_of_code%2F2024%2Findex.livemd)

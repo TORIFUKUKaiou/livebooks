@@ -1,0 +1,9 @@
+# Advent of Code 2025
+
+## Index
+
+Requires Livebook v0.18+.
+
+* [Day 1](day-01.livemd)
+* [Day 2](day-02.livemd)
+* [Day 3](day-03.livemd)
