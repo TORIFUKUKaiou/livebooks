@@ -1,0 +1,173 @@
+# Day 4: Printing Department
+
+## Day 4: Printing Department
+
+[Day 4: Printing Department](https://adventofcode.com/2025/day/4)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2025Day4Part1Solver do
+  def solve(map) do
+    map
+    |> Enum.reduce({0, map}, &fun/2)
+    |> elem(0)
+  end
+
+  def fun({{_i, _j}, ?.}, {acc, map}), do: {acc, map}
+  def fun({{i, j}, ?@}, {acc, map}) do
+    directions = [
+      {-1, -1}, {0, -1}, {1, -1},
+      {-1,  0},          {1,  0},
+      {-1,  1}, {0,  1}, {1,  1}
+    ]
+
+    new_acc = directions
+    |> Enum.reduce_while(0, fn {x, y}, cnt ->
+      v = Map.get(map, {i + x, j + y}, ?.)
+      
+      (if v == ?@, do: cnt + 1, else: cnt)
+      |> do_fun()
+    end)
+    |> Kernel.<(4)
+    |> if(do: acc + 1, else: acc)
+
+    {new_acc, map}
+  end
+
+  defp do_fun(new_cnt) when new_cnt >= 4, do: {:halt, new_cnt}
+  defp do_fun(new_cnt), do: {:cont, new_cnt}
+end
+```
+
+```elixir
+defmodule AdventOfCode2025Day4Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> AdventOfCode2025Day4Part1Solver.solve()
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.with_index()
+    |> Enum.reduce(%{}, fn {line, i}, acc ->
+      line
+      |> String.to_charlist()
+      |> Enum.with_index()
+      |> Enum.reduce(acc, fn {c, j}, acc ->
+        Map.put(acc, {i, j}, c)
+      end)
+    end)
+  end
+end
+```
+
+```elixir
+input = """
+..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@.
+"""
+
+AdventOfCode2025Day4Part1.run(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day4Part2Solver do
+  def solve(map) do
+    do_solve(map, 0)
+  end
+
+  defp do_solve(map, cnt) do
+    removes = map |> Enum.reduce({[], map}, &fun/2) |> elem(0)
+    if Enum.count(removes) == 0 do
+      cnt
+    else
+      new_cnt = cnt + Enum.count(removes)
+      new_map = removes
+        |> Enum.reduce(map, fn {i, j}, acc ->
+          Map.put(acc, {i, j}, ?x)
+        end)
+
+      do_solve(new_map, new_cnt)
+    end
+  end
+
+  defp fun({{_i, _j}, ?.}, {acc, map}), do: {acc, map}
+  defp fun({{_i, _j}, ?x}, {acc, map}), do: {acc, map}
+  defp fun({{i, j}, ?@}, {acc, map}) do
+    directions = [
+      {-1, -1}, {0, -1}, {1, -1},
+      {-1,  0},          {1,  0},
+      {-1,  1}, {0,  1}, {1,  1}
+    ]
+
+    new_acc = directions
+    |> Enum.reduce_while(0, fn {x, y}, cnt ->
+      v = Map.get(map, {i + x, j + y}, ?.)
+      
+      (if v == ?@, do: cnt + 1, else: cnt)
+      |> do_fun()
+    end)
+    |> Kernel.<(4)
+    |> if(do: [{i, j} | acc], else: acc)
+
+    {new_acc, map}
+  end
+
+  defp do_fun(new_cnt) when new_cnt >= 4, do: {:halt, new_cnt}
+  defp do_fun(new_cnt), do: {:cont, new_cnt}
+end
+```
+
+```elixir
+defmodule AdventOfCode2025Day4Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> AdventOfCode2025Day4Part2Solver.solve()
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.with_index()
+    |> Enum.reduce(%{}, fn {line, i}, acc ->
+      line
+      |> String.to_charlist()
+      |> Enum.with_index()
+      |> Enum.reduce(acc, fn {c, j}, acc ->
+        Map.put(acc, {i, j}, c)
+      end)
+    end)
+  end
+end
+```
+
+```elixir
+input = """
+..@@.@@@@.
+@@@.@.@.@@
+@@@@@.@.@@
+@.@@@@..@.
+@@.@@@@.@@
+.@@@@@@@.@
+.@.@.@.@@@
+@.@@@.@@@@
+.@@@@@@@@.
+@.@.@@@.@.
+"""
+
+AdventOfCode2025Day4Part2.run(input)
+```
