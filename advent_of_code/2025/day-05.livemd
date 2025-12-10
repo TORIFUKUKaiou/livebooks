@@ -1,0 +1,135 @@
+# Day 5: Cafeteria
+
+## Day 5: Cafeteria
+
+[Day 5: Cafeteria](https://adventofcode.com/2025/day/5)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2025Day5Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> do_solve()
+  end
+
+  defp do_solve({ids, ranges}) do
+    ids
+    |> Enum.reduce(0, fn id, acc ->
+      Enum.any?(ranges, fn range ->
+        id in range
+      end)
+      |> if(do: acc + 1, else: acc)
+    end)
+  end
+
+  defp parse_input(input) do
+    [
+      ranges,
+      [""],
+      ids,
+      [""]
+    ] = input
+        |> String.split("\n")
+        |> Enum.chunk_by(& &1 == "")
+    
+    ranges = Enum.map(ranges, fn range ->
+              %{"first" => first, "last" => last} = Regex.named_captures(~r/(?<first>\d*)-(?<last>\d*)/, range)
+              Range.new(String.to_integer(first), String.to_integer(last))
+             end)
+  
+    ids = Enum.map(ids, &String.to_integer/1)
+    
+    {ids, ranges}
+  end
+end
+```
+
+```elixir
+test = """
+3-5
+10-14
+16-20
+12-18
+
+1
+5
+8
+11
+17
+32
+"""
+
+AdventOfCode2025Day5Part1.run(test)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day5Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve({_ids, ranges}) do
+    do_solve(ranges, 0, ranges)
+    |> Enum.map(&Range.size/1)
+    |> Enum.sum()
+  end
+
+  defp do_solve([], _offset, ranges), do: ranges
+
+  defp do_solve([head | tail], offset, ranges) do
+    if Enum.all?(tail, fn range -> Range.disjoint?(head, range) end) do
+      do_solve(tail, offset + 1, ranges)
+    else
+      index = Enum.find_index(tail, fn range -> Range.disjoint?(head, range) == false end) + 1 + offset
+      f1..l1//_ = Enum.at(ranges, index)
+      f2..l2//_ = head
+      new_ranges = List.replace_at(ranges, index, min(f1, f2)..max(l1, l2)) |> List.delete_at(offset)
+      do_solve(new_ranges, 0, new_ranges)
+    end
+  end
+
+  defp parse_input(input) do
+    [
+      ranges,
+      [""],
+      ids,
+      [""]
+    ] = input
+        |> String.split("\n")
+        |> Enum.chunk_by(& &1 == "")
+    
+    ranges = Enum.map(ranges, fn range ->
+              %{"first" => first, "last" => last} = Regex.named_captures(~r/(?<first>\d*)-(?<last>\d*)/, range)
+              Range.new(String.to_integer(first), String.to_integer(last))
+             end)
+  
+    ids = Enum.map(ids, &String.to_integer/1)
+    
+    {ids, ranges}
+  end
+end
+```
+
+```elixir
+test = """
+3-5
+10-14
+16-20
+12-18
+
+1
+5
+8
+11
+17
+32
+"""
+
+AdventOfCode2025Day5Part2.run(test)
+```
