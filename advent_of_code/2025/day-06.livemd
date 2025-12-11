@@ -1,0 +1,129 @@
+# Day 6: Trash Compactor
+
+## Day 6: Trash Compactor
+
+[Day 6: Trash Compactor](https://adventofcode.com/2025/day/6)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2025Day6Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve({operations, list_of_lists}) do
+    0..(Enum.count(operations) - 1)
+    |> Enum.reduce(0, fn i, acc ->
+      numbers = 0..(Enum.count(list_of_lists) - 1)
+      |> Enum.map(fn j ->
+        list_of_lists |> Enum.at(j) |> Enum.at(i)
+      end)
+
+      if Enum.at(operations, i) == "+" do
+        Enum.sum(numbers) + acc
+      else
+        Enum.product(numbers) + acc
+      end
+    end)
+  end
+
+  defp parse_input(input) do
+    [operations | numbers] = input
+    |> String.split("\n", trim: true)
+    |> Enum.reverse()
+
+    operations = String.split(operations, " ", trim: true)
+
+    list_of_lists = Enum.reduce(numbers, [], fn line, acc ->
+      list = line
+      |> String.split(" ", trim: true)
+      |> Enum.map(&String.to_integer/1)
+
+      [list | acc]
+    end)
+
+    {operations, list_of_lists}
+  end
+end
+```
+
+```elixir
+input = """
+123 328  51 64 
+ 45 64  387 23 
+  6 98  215 314
+*   +   *   +  
+"""
+
+AdventOfCode2025Day6Part1.run(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day6Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve({operations, list_of_lists}) do
+    Enum.zip(operations, list_of_lists)
+    |> Enum.reduce(0, fn 
+      {"*", list}, acc -> acc + Enum.product(list)
+      {"+", list}, acc -> acc + Enum.sum(list)
+    end)
+  end
+
+  defp parse_input(input) do
+    [operations | numbers] = input
+    |> String.split("\n", trim: true)
+    |> Enum.reverse()
+
+    operations = String.split(operations, " ", trim: true)
+
+    list_of_charlists = numbers |> Enum.reverse() |> Enum.map(&String.to_charlist/1)
+    width = Enum.at(list_of_charlists, 0) |> Enum.count()
+    height = Enum.count(list_of_charlists)
+
+    last_index = Enum.count(operations) - 1
+    {list_of_lists, [], list, ^last_index} = 
+    for i <- 0..(width - 1), j <- 0..(height - 1) do
+      {j, i}
+    end
+    |> Enum.reduce({[], [], [], 0}, fn {j, i}, {list_of_lists, tmp, acc, index} ->
+      v = Enum.at(list_of_charlists, j) |> Enum.at(i)
+      new_tmp = [v | tmp]
+      if j >= height - 1 do
+        if Enum.all?(new_tmp, & &1 == 0x20) do
+          new_list_of_lists = List.insert_at(list_of_lists, index, acc)
+          {new_list_of_lists, [], [], index + 1}
+        else
+          num = new_tmp |> Enum.filter(& &1 != 0x20) |> Enum.reverse() |> List.to_integer()
+          new_acc = [num | acc]
+          {list_of_lists, [], new_acc, index}
+        end
+      else
+        {list_of_lists, new_tmp, acc, index}
+      end
+    end)
+
+    {operations, List.insert_at(list_of_lists, last_index, list)}
+  end
+end
+```
+
+```elixir
+input = """
+123 328  51 64 
+ 45 64  387 23 
+  6 98  215 314
+*   +   *   +  
+"""
+
+AdventOfCode2025Day6Part2.run(input)
+```
