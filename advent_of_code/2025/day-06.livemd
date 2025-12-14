@@ -86,21 +86,25 @@ defmodule AdventOfCode2025Day6Part2 do
 
     operations = String.split(operations, " ", trim: true)
 
+    chunk_fun = fn charlist, acc ->
+      if Enum.all?(charlist, & &1 == ?\s) do
+        {:cont, acc, []}
+      else
+        num = charlist |> Enum.reject(& &1 == ?\s) |> List.to_integer()
+        {:cont, [num | acc]}
+      end
+    end
+
+    after_fun = fn
+      acc -> {:cont, acc, []}
+    end
+
     list_of_lists = 
       numbers 
       |> Enum.reverse() 
       |> Enum.map(&String.to_charlist/1)
       |> Enum.zip_with(& &1)
-      |> Enum.chunk_by(fn charlist -> Enum.all?(charlist, & &1 == ?\s) end)
-      |> Enum.reject(& Enum.count(&1) == 1)
-      |> Enum.reduce([], fn charlists, acc ->
-        list_of_number = 
-          charlists
-          |> Enum.map(fn charlist -> Enum.reject(charlist, & &1 == ?\s) end)
-          |> Enum.map(&List.to_integer/1)
-        [list_of_number | acc]
-      end)
-      |> Enum.reverse()
+      |> Enum.chunk_while([], chunk_fun, after_fun)
 
     {operations, list_of_lists}
   end
