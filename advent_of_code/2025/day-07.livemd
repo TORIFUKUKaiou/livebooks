@@ -1,0 +1,139 @@
+# Day 7: Laboratories
+
+## Day 7: Laboratories
+
+[Day 7: Laboratories](https://adventofcode.com/2025/day/7)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2025Day7Part1Solver do
+  def solve(list_of_charlists) do
+    list_of_charlists
+    |> Enum.reduce({nil, 0}, &do_solve/2)
+    |> elem(1)
+  end
+
+  def do_solve(charlist, {nil, 0}) do
+    s_index = Enum.find_index(charlist, & &1 == ?S)
+    {MapSet.new([s_index]), 0}
+  end
+
+  def do_solve(charlist, {map_set, count}) do
+    Enum.reduce(map_set, {map_set, count}, fn i, {acc_map_set, acc_count} ->
+      if Enum.at(charlist, i) == ?^ do
+        new_map_set = acc_map_set |> MapSet.delete(i) |> MapSet.put(i - 1) |> MapSet.put(i + 1)
+        {new_map_set, acc_count + 1}
+      else
+        {acc_map_set, acc_count}
+      end
+    end)
+  end
+end
+
+defmodule AdventOfCode2025Day7Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_charlists), do: AdventOfCode2025Day7Part1Solver.solve(list_of_charlists)
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.to_charlist/1)
+  end
+end
+```
+
+```elixir
+input = """
+.......S.......
+...............
+.......^.......
+...............
+......^.^......
+...............
+.....^.^.^.....
+...............
+....^.^...^....
+...............
+...^.^...^.^...
+...............
+..^...^.....^..
+...............
+.^.^.^.^.^...^.
+...............
+"""
+
+AdventOfCode2025Day7Part1.run(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day7Part2Solver do
+  def solve(list_of_charlists) do
+    list_of_charlists
+    |> Enum.reduce(nil, &do_solve/2)
+    |> Map.values()
+    |> Enum.sum()
+  end
+
+  def do_solve(charlist, nil) do
+    s_index = Enum.find_index(charlist, & &1 == ?S)
+    %{s_index => 1}
+  end
+
+  def do_solve(charlist, map) do
+    Enum.reduce(map, map, fn {i, count}, acc ->
+      if Enum.at(charlist, i) == ?^ do
+        acc |> Map.delete(i) |> Map.update(i - 1, count, & &1 + count) |> Map.update(i + 1, count, & &1 + count)
+      else
+        acc
+      end
+    end)
+  end
+end
+
+defmodule AdventOfCode2025Day7Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_charlists), do: AdventOfCode2025Day7Part2Solver.solve(list_of_charlists)
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.to_charlist/1)
+  end
+end
+```
+
+```elixir
+input = """
+.......S.......
+...............
+.......^.......
+...............
+......^.^......
+...............
+.....^.^.^.....
+...............
+....^.^...^....
+...............
+...^.^...^.^...
+...............
+..^...^.....^..
+...............
+.^.^.^.^.^...^.
+...............
+"""
+
+AdventOfCode2025Day7Part2.run(input)
+```
