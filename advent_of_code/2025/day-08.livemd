@@ -1,0 +1,215 @@
+# Day 8: Playground
+
+## Section
+
+## Day 8: Playground
+
+[Day 8: Playground](https://adventofcode.com/2025/day/8)
+
+## Part 1
+
+```elixir
+defmodule Awesome do
+  def combination(_, 0), do: [[]]
+  def combination([], _), do: []
+
+  def combination([x | xs], n) do
+    for(y <- combination(xs, n - 1), do: [x | y]) ++ combination(xs, n)
+  end
+end
+
+defmodule AdventOfCode2025Day8Part1Solver do
+  def run(list_of_lists, n) do
+    sorted_list_of_lists = sort(list_of_lists)
+    Enum.at(sorted_list_of_lists, -1)
+
+    0..(n - 1)
+    |> Enum.reduce([], fn i, acc ->
+      [point1, point2] = Enum.at(sorted_list_of_lists, i)
+
+      index1 = Enum.find_index(acc, fn set -> point1 in set end)
+      index2 = Enum.find_index(acc, fn set -> point2 in set end)
+
+      cond do
+        index1 && index2 && index1 != index2 ->
+          # 両方別グループにいる → 合体
+          set1 = Enum.at(acc, index1)
+          set2 = Enum.at(acc, index2)
+          merged = MapSet.union(set1, set2)
+          acc |> List.delete_at(max(index1, index2)) |> List.delete_at(min(index1, index2)) |> then(&[merged | &1])
+  
+        index1 ->
+          List.update_at(acc, index1, &MapSet.put(&1, point2))
+  
+        index2 ->
+          List.update_at(acc, index2, &MapSet.put(&1, point1))
+  
+        true ->
+          [MapSet.new([point1, point2]) | acc]
+      end
+    end)
+    |> Enum.sort_by(&Enum.count/1, :desc)
+    |> Enum.take(3)
+    |> Enum.map(&Enum.count/1)
+    |> Enum.product()
+  end
+
+  defp sort(list_of_lists) do
+    list_of_lists
+    |> Awesome.combination(2)
+    |> Enum.sort_by(fn points ->
+      Enum.zip_with(points, fn [a, b] -> (a - b) ** 2 end)
+      |> Enum.sum()
+    end)
+  end
+end
+
+defmodule AdventOfCode2025Day8Part1 do
+  def run(input, n \\ 1000) do
+    input
+    |> parse_input()
+    |> solve(n)
+  end
+
+  defp solve(list_of_lists, n) do
+    AdventOfCode2025Day8Part1Solver.run(list_of_lists, n)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      line
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.to_integer/1)
+    end)
+  end
+end
+```
+
+```elixir
+input = """
+162,817,812
+57,618,57
+906,360,560
+592,479,940
+352,342,300
+466,668,158
+542,29,236
+431,825,988
+739,650,466
+52,470,668
+216,146,977
+819,987,18
+117,168,530
+805,96,715
+346,949,466
+970,615,88
+941,993,340
+862,61,35
+984,92,344
+425,690,689
+"""
+
+AdventOfCode2025Day8Part1.run(input, 10)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day8Part2Solver do
+  def run(list_of_lists) do
+    acc = Enum.map(list_of_lists, & MapSet.new([&1]))
+
+    list_of_lists
+    |> sort()
+    |> Enum.reduce_while({acc, nil}, fn [point1, point2], {acc, nil} ->
+
+      index1 = Enum.find_index(acc, fn set -> point1 in set end)
+      index2 = Enum.find_index(acc, fn set -> point2 in set end)
+
+      cond do
+        index1 && index2 && index1 != index2 ->
+          # 両方別グループにいる → 合体
+          set1 = Enum.at(acc, index1)
+          set2 = Enum.at(acc, index2)
+          merged = MapSet.union(set1, set2)
+          new_acc = acc |> List.delete_at(max(index1, index2)) |> List.delete_at(min(index1, index2)) |> then(&[merged | &1])
+
+          if Enum.count(new_acc) == 1 do
+            [x1, _, _] = point1
+            [x2, _, _] = point2
+            {:halt, {new_acc, x1 * x2}}
+          else
+            {:cont, {new_acc, nil}}
+          end
+
+        index1 ->
+          {:cont, {List.update_at(acc, index1, &MapSet.put(&1, point2)), nil}}
+  
+        index2 ->
+          {:cont, {List.update_at(acc, index2, &MapSet.put(&1, point1)), nil}}
+      end
+    end)
+    |> elem(1)
+  end
+
+  defp sort(list_of_lists) do
+    list_of_lists
+    |> Awesome.combination(2)
+    |> Enum.sort_by(fn points ->
+      Enum.zip_with(points, fn [a, b] -> (a - b) ** 2 end)
+      |> Enum.sum()
+    end)
+  end
+end
+
+defmodule AdventOfCode2025Day8Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_lists) do
+    AdventOfCode2025Day8Part2Solver.run(list_of_lists)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      line
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.to_integer/1)
+    end)
+  end
+end
+```
+
+```elixir
+input = """
+162,817,812
+57,618,57
+906,360,560
+592,479,940
+352,342,300
+466,668,158
+542,29,236
+431,825,988
+739,650,466
+52,470,668
+216,146,977
+819,987,18
+117,168,530
+805,96,715
+346,949,466
+970,615,88
+941,993,340
+862,61,35
+984,92,344
+425,690,689
+"""
+
+AdventOfCode2025Day8Part2.run(input)
+```
