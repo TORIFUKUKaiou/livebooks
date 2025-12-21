@@ -1,0 +1,96 @@
+# Day 10: Factory
+
+## Day 10: Factory
+
+[Day 10: Factory](https://adventofcode.com/2025/day/10)
+
+## Part 1
+
+```elixir
+defmodule Awesome do
+  def combination(_, 0), do: [[]]
+  def combination([], _), do: []
+
+  def combination([x | xs], n) do
+    for(y <- combination(xs, n - 1), do: [x | y]) ++ combination(xs, n)
+  end
+end
+
+defmodule AdventOfCode2025Day10Part1Solver do
+  def run(list) do
+    Enum.reduce(list, [], &solve/2)
+    |> Enum.sum()
+  end
+
+  defp solve({pattern, buttons}, acc) do
+    Range.new(1, Enum.count(buttons))
+    |> Enum.reduce_while(nil, fn i, nil ->
+      Awesome.combination(buttons, i)
+      |> Enum.any?(fn selected_buttons -> do_solve(selected_buttons, pattern) end)
+      |> if(do: {:halt, i}, else: {:cont, nil})
+    end)
+    |> List.wrap()
+    |> Kernel.++(acc)
+  end
+
+  defp do_solve(selected_buttons, pattern) do
+    init = String.duplicate(".", String.length(pattern)) |> String.to_charlist()
+    
+    selected_buttons
+    |> Enum.reduce(init, fn list, acc ->
+      Enum.reduce(list, acc, fn i, acc ->
+        List.update_at(acc, i, fn 
+          ?. -> ?#
+          ?# -> ?.
+        end)
+      end)
+    end)
+    |> List.to_string()
+    |> Kernel.==(pattern)    
+  end
+end
+
+defmodule AdventOfCode2025Day10Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list), do: AdventOfCode2025Day10Part1Solver.run(list)
+
+  defp parse_input(input) do
+    String.split(input, "\n", trim: true)
+    |> Enum.map(&parse_line/1)
+  end
+
+  defp parse_line(line) do
+    line =
+      case String.split(line, "{", parts: 2) do
+        [left, _] -> left
+        [left] -> left
+      end
+
+    [_, pattern] = Regex.run(~r/\[([.#]+)\]/, line)
+    buttons =
+      Regex.scan(~r/\(([^)]*)\)/, line)
+      |> Enum.map(fn [_, inside] ->
+        inside
+        |> String.split(",", trim: true)
+        |> Enum.map(&String.to_integer/1)
+      end)
+
+    {pattern, buttons}
+  end
+end
+```
+
+```elixir
+input = """
+[.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+[...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+[.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
+"""
+
+AdventOfCode2025Day10Part1.run(input)
+```
