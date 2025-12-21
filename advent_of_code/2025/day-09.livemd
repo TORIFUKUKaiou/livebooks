@@ -1,0 +1,212 @@
+# Day 9: Movie Theater
+
+## Day 9: Movie Theater
+
+[Day 9: Movie Theater](https://adventofcode.com/2025/day/9)
+
+## Part 1
+
+```elixir
+defmodule Awesome do
+  def combination(_, 0), do: [[]]
+  def combination([], _), do: []
+
+  def combination([x | xs], n) do
+    for(y <- combination(xs, n - 1), do: [x | y]) ++ combination(xs, n)
+  end
+end
+
+defmodule AdventOfCode2025Day9Part1 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_lists) do
+    list_of_lists
+    |> Awesome.combination(2)
+    |> Enum.reduce(0, fn pair, acc -> max(acc, area(pair)) end)
+  end
+
+  defp area([[x1, y1], [x2, y2]]) do
+    (abs(x1 - x2) + 1) * (abs(y1 - y2) + 1)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      line
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.to_integer/1)
+    end)
+  end
+end
+```
+
+```elixir
+input = """
+7,1
+11,1
+11,7
+9,7
+9,5
+2,5
+2,3
+7,3
+"""
+
+AdventOfCode2025Day9Part1.run(input)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day9Part2Solver do
+  def run(list_of_lists) do
+    tiles_set = build_boundary_tiles(list_of_lists)
+
+    x_to_y_min_map = build_min_map(tiles_set)
+    x_to_y_max_map = build_max_map(tiles_set)
+    x_to_y_min_max_map =
+      Map.merge(x_to_y_min_map, x_to_y_max_map, fn _k, min_v, max_v -> min_v..max_v end)
+
+    y_to_x_min_map =
+      tiles_set
+      |> Enum.map(fn [x, y] -> [y, x] end)
+      |> build_min_map()
+
+    y_to_x_max_map =
+      tiles_set
+      |> Enum.map(fn [x, y] -> [y, x] end)
+      |> build_max_map()
+
+    y_to_x_min_max_map =
+      Map.merge(y_to_x_min_map, y_to_x_max_map, fn _k, min_v, max_v -> min_v..max_v end)
+
+    solve(list_of_lists, x_to_y_min_max_map, y_to_x_min_max_map)
+  end
+
+  defp solve(list_of_lists, x_to_y_min_max_map, y_to_x_min_max_map) do
+    list_of_lists
+    |> Awesome.combination(2)
+    |> Enum.sort_by(fn pair -> area(pair) end, :desc)
+    |> Enum.reduce_while(nil, fn pair, nil ->
+      if can_make?(pair, x_to_y_min_max_map, y_to_x_min_max_map),
+        do: {:halt, area(pair)},
+        else: {:cont, nil}
+    end)
+  end
+
+  defp area([[x1, y1], [x2, y2]]) do
+    (abs(x1 - x2) + 1) * (abs(y1 - y2) + 1)
+  end
+
+  defp can_make?([[x1, y1], [x2, y2]], x_to_y_min_max_map, y_to_x_min_max_map) do
+    x_range = normalize_range(x1, x2)
+    y_range = normalize_range(y1, y2)
+
+    Enum.all?(x_range, fn x ->
+      range_covers?(Map.get(x_to_y_min_max_map, x), y_range)
+    end) and
+      Enum.all?(y_range, fn y ->
+        range_covers?(Map.get(y_to_x_min_max_map, y), x_range)
+      end)
+  end
+
+  defp normalize_range(a, b) when a <= b, do: a..b
+  defp normalize_range(a, b), do: b..a
+
+  defp range_covers?(%Range{first: outer_first, last: outer_last}, %Range{first: inner_first, last:
+  inner_last}) do
+    outer_first <= inner_first and inner_last <= outer_last
+  end
+
+  defp range_covers?(_, _), do: false
+
+  defp build_boundary_tiles(list_of_lists) do
+    [head | _] = list_of_lists
+
+    list_of_lists
+    |> Enum.reduce({nil, nil}, &do_build_boundary_tiles/2)
+    |> then(fn acc -> do_build_boundary_tiles(head, acc) end)
+    |> elem(0)
+  end
+
+  defp do_build_boundary_tiles(point, {nil, nil}) do
+    {MapSet.new([point]), point}
+  end
+
+  defp do_build_boundary_tiles([x, y], {map_set, [x2, y]}) do
+    new_map_set =
+      Range.new(min(x, x2), max(x, x2))
+      |> Enum.reduce(map_set, fn xi, acc ->
+        MapSet.put(acc, [xi, y])
+      end)
+
+    {new_map_set, [x, y]}
+  end
+
+  defp do_build_boundary_tiles([x, y], {map_set, [x, y2]}) do
+    new_map_set =
+      Range.new(min(y, y2), max(y, y2))
+      |> Enum.reduce(map_set, fn yi, acc ->
+        MapSet.put(acc, [x, yi])
+      end)
+
+    {new_map_set, [x, y]}
+  end
+
+  defp build_min_map(list_of_lists) do
+    list_of_lists
+    |> Enum.reduce(%{}, fn [base, value], acc ->
+      Map.update(acc, base, value, &min(&1, value))
+    end)
+  end
+
+  defp build_max_map(list_of_lists) do
+    list_of_lists
+    |> Enum.reduce(%{}, fn [base, value], acc ->
+      Map.update(acc, base, value, &max(&1, value))
+    end)
+  end
+end
+
+defmodule AdventOfCode2025Day9Part2 do
+  def run(input) do
+    input
+    |> parse_input()
+    |> solve()
+  end
+
+  defp solve(list_of_lists) do
+    AdventOfCode2025Day9Part2Solver.run(list_of_lists)
+  end
+
+  defp parse_input(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(fn line ->
+      line
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.to_integer/1)
+    end)
+  end
+end
+```
+
+```elixir
+input = """
+7,1
+11,1
+11,7
+9,7
+9,5
+2,5
+2,3
+7,3
+"""
+
+AdventOfCode2025Day9Part2.run(input)
+```
