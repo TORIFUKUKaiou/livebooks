@@ -1,0 +1,141 @@
+# Day 11: Reactor
+
+## Day 11: Reactor
+
+[Day 11: Reactor](https://adventofcode.com/2025/day/11)
+
+## Part 1
+
+```elixir
+defmodule AdventOfCode2025Day11Part1 do
+  def run(input) do
+    input
+    |> parse()
+    |> then(& solve(:you, &1))
+  end
+
+  def solve(:out, _map) do
+    1
+  end
+
+  def solve(nil, _map) do
+    0
+  end
+
+  def solve(node, map) do
+    Map.get(map, node)
+    |> Enum.reduce(0, fn node, acc ->
+      acc + solve(node, map)
+    end)
+  end
+
+  defp parse(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.reduce(%{}, fn line, acc ->
+      [key, values] = String.split(line, ":", trim: true)
+      Map.put(acc, String.to_atom(key), String.split(values, " ", trim: true) |> Enum.map(&String.to_atom/1))
+    end)
+  end
+end
+```
+
+```elixir
+example = """
+aaa: you hhh
+you: bbb ccc
+bbb: ddd eee
+ccc: ddd eee fff
+ddd: ggg
+eee: out
+fff: out
+ggg: out
+hhh: ccc fff iii
+iii: out
+"""
+
+AdventOfCode2025Day11Part1.run(example)
+```
+
+## Part 2
+
+```elixir
+defmodule AdventOfCode2025Day11Part2 do
+  def run(input) do
+    map = parse(input)
+    {ans, _memo} = solve(:svr, map, false, false, %{})
+    ans
+  end
+
+  # ---- core ----
+
+  defp solve(:out, _map, true, true, memo), do: {1, memo}
+  defp solve(:out, _map, _sd, _sf, memo), do: {0, memo}
+
+  defp solve(node, map, seen_dac, seen_fft, memo) do
+    {sd, sf} = update_flags(node, seen_dac, seen_fft)
+    key = {node, sd, sf}
+
+    case Map.fetch(memo, key) do
+      {:ok, cached} ->
+        {cached, memo}
+
+      :error ->
+        {sum, memo2} = sum_children(node, map, sd, sf, memo)
+        {sum, Map.put(memo2, key, sum)}
+    end
+  end
+
+  defp sum_children(node, map, sd, sf, memo) do
+    children = Map.get(map, node, [])
+
+    Enum.reduce(children, {0, memo}, fn child, {acc, memo_acc} ->
+      {v, memo_next} = solve(child, map, sd, sf, memo_acc)
+      {acc + v, memo_next}
+    end)
+  end
+
+  defp update_flags(node, seen_dac, seen_fft) do
+    {
+      seen_dac or node == :dac,
+      seen_fft or node == :fft
+    }
+  end
+
+  # ---- parse ----
+
+  defp parse(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.reduce(%{}, fn line, acc ->
+      [key, values] = String.split(line, ":", trim: true)
+
+      Map.put(
+        acc,
+        String.to_atom(key),
+        values |> String.split(" ", trim: true) |> Enum.map(&String.to_atom/1)
+      )
+    end)
+  end
+end
+```
+
+```elixir
+example = """
+svr: aaa bbb
+aaa: fft
+fft: ccc
+bbb: tty
+tty: ccc
+ccc: ddd eee
+ddd: hub
+hub: fff
+eee: dac
+dac: fff
+fff: ggg hhh
+ggg: out
+hhh: out
+"""
+
+AdventOfCode2025Day11Part2.run(example)
+```
